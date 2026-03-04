@@ -22,7 +22,8 @@ import {
   PromptInputAction,
 } from "@/components/ui/prompt-input";
 import { Tool } from "@/components/ui/tool";
-import type { Message as MessageType, StreamStep, AgentToolPart } from "@/types";
+import { PersistedThinkingChain } from "@/components/workspace/persisted-thinking-chain";
+import type { Message as MessageType, StreamStep, AgentToolPart, AgentProcessMetadata } from "@/types";
 
 interface ChatPanelProps {
   sessionId: string;
@@ -60,12 +61,19 @@ export function ChatPanel({ sessionId, messages, onSend, isSending, streamSteps 
               输入需求开始对话
             </p>
           )}
-          {messages.map((msg) => (
+          {messages.map((msg) => {
+            const meta = msg.metadata as AgentProcessMetadata | null;
+            const hasProcess = !!(meta?.steps?.length || meta?.tools?.length);
+
+            return (
             <Message
               key={msg.id}
               className={msg.role === "user" ? "justify-end" : "justify-start"}
             >
               <div className="flex flex-col gap-1 max-w-[80%]">
+                {msg.role === "assistant" && hasProcess && (
+                  <PersistedThinkingChain metadata={meta!} />
+                )}
                 <MessageContent
                   markdown={msg.role === "assistant"}
                   className={
@@ -95,7 +103,8 @@ export function ChatPanel({ sessionId, messages, onSend, isSending, streamSteps 
                 )}
               </div>
             </Message>
-          ))}
+            );
+          })}
 
           {/* Agent thinking chain */}
           {isSending && (

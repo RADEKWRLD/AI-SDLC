@@ -26,3 +26,23 @@ export type AgentToolPart = {
   toolCallId?: string;
   errorText?: string;
 };
+
+export type PersistedAgentStep = {
+  id: string;
+  label: string;
+  status: "done" | "error";
+};
+
+export type PersistedAgentTool = {
+  agent: string;
+  label: string;
+  state: "output-available" | "output-error";
+  errorText?: string;
+};
+
+export type AgentProcessMetadata = {
+  agents: string[];
+  generatedTypes: string[];
+  steps: PersistedAgentStep[];
+  tools: PersistedAgentTool[];
+};

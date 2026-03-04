@@ -8,6 +8,7 @@ import { runDesignAgent } from "@/lib/ai/agents/design-agent";
 import { runERAgent } from "@/lib/ai/agents/er-agent";
 import { runAPIAgent } from "@/lib/ai/agents/api-agent";
 import { runPlanAgent } from "@/lib/ai/agents/plan-agent";
+import type { PersistedAgentStep, PersistedAgentTool } from "@/types";
 
 function sseEvent(data: Record<string, unknown>): string {
   return `data: ${JSON.stringify(data)}\n\n`;
@@ -50,6 +51,10 @@ export async function POST(req: Request) {
 
         // Step 3: Run agents — fire all, stream as each completes
         const savedDocs: string[] = [];
+        const persistedSteps: PersistedAgentStep[] = [
+          { id: `step-${Date.now()}`, label: "正在分析需求，决定调用哪些 Agent...", status: "done" },
+        ];
+        const persistedTools: PersistedAgentTool[] = [];
 
         const agentLabels: Record<string, string> = {
           requirement: "需求分析",
@@ -108,6 +113,7 @@ export async function POST(req: Request) {
 
         // Start all agents, stream progress as each one finishes
         send({ type: "status", message: `正在并行运行 ${agentTasks.length} 个 Agent...` });
+        persistedSteps.push({ id: `step-${Date.now()}`, label: `正在并行运行 ${agentTasks.length} 个 Agent...`, status: "done" });
 
         // Use Promise.allSettled-like pattern but stream as each resolves
         const pending = agentTasks.map(({ agent, promise }) =>
@@ -167,9 +173,11 @@ export async function POST(req: Request) {
               }
 
               send({ type: "doc_saved", agent, label: agentLabels[agent] });
+              persistedTools.push({ agent, label: agentLabels[agent], state: "output-available" });
             })
             .catch((err) => {
               send({ type: "agent_error", agent, label: agentLabels[agent], errorText: String(err) });
+              persistedTools.push({ agent, label: agentLabels[agent], state: "output-error", errorText: String(err) });
             })
         );
 
@@ -181,7 +189,7 @@ export async function POST(req: Request) {
           sessionId,
           role: "assistant",
           content: summary,
-          metadata: { agents: agentsToRun, generatedTypes: savedDocs },
+          metadata: { agents: agentsToRun, generatedTypes: savedDocs, steps: persistedSteps, tools: persistedTools },
         });
 
         send({ type: "done", summary, generated: savedDocs });
