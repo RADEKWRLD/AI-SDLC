@@ -10,7 +10,7 @@ interface MermaidRendererProps {
 }
 
 const MIN_SCALE = 0.1;
-const MAX_SCALE = 3;
+const MAX_SCALE = 10;
 const ZOOM_STEP = 0.1;
 
 export function MermaidRenderer({ code, className, onSvgChange }: MermaidRendererProps) {
