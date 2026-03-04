@@ -116,14 +116,21 @@ export function ChatPanel({ sessionId, messages, onSend, isSending, isChatting =
           {isChatting && (
             <Message className="justify-start">
               <div className="max-w-[80%]">
-                <div className="bg-secondary text-secondary-foreground rounded-2xl rounded-bl-md px-4 py-3 text-sm whitespace-pre-wrap">
-                  {streamingText || (
+                {streamingText ? (
+                  <MessageContent
+                    markdown
+                    className="bg-secondary text-secondary-foreground rounded-2xl rounded-bl-md px-4 py-3 text-sm"
+                  >
+                    {streamingText}
+                  </MessageContent>
+                ) : (
+                  <div className="bg-secondary text-secondary-foreground rounded-2xl rounded-bl-md px-4 py-3 text-sm">
                     <span className="flex items-center gap-2 text-muted-foreground">
                       <Loader2 className="size-3.5 animate-spin text-primary" />
                       思考中...
                     </span>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             </Message>
           )}
