@@ -15,25 +15,22 @@ export function Sidebar() {
   const { data: session } = useSession();
 
   return (
-    <aside className="w-64 bg-[#1A1A1A] flex flex-col h-screen sticky top-0">
+    <aside className="w-64 bg-[#FFF5F0] flex flex-col h-screen sticky top-0">
       {/* Brand */}
       <div className="p-5 pb-3">
         <Link href="/dashboard" className="flex items-center gap-2.5">
           <img src="/logo-solid.svg" alt="CycleMind" className="h-7 w-7" />
-          <span className="text-lg font-extrabold tracking-tight text-white">
+          <span className="text-lg font-extrabold tracking-tight text-[#1A1A1A]">
             CycleMind
           </span>
         </Link>
-        <p className="text-[11px] text-[#555] mt-1.5 pl-[38px]">
-          AI-Powered Software Design
-        </p>
       </div>
 
       {/* New Project */}
       <div className="px-3 py-2">
         <Link
           href="/dashboard"
-          className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-[#999] hover:bg-[#2A2A2A] hover:text-white transition-all duration-200 w-full"
+          className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-[#666] hover:bg-[#FA5D29]/10 hover:text-[#FA5D29] transition-all duration-200 w-full"
         >
           <Plus className="h-4 w-4" />
           新建项目
@@ -44,9 +41,9 @@ export function Sidebar() {
       <div className="flex-1" />
 
       {/* User menu */}
-      <div className="p-3 border-t border-[#2A2A2A]">
+      <div className="p-3 border-t border-[#F0DDD4]">
         <DropdownMenu>
-          <DropdownMenuTrigger className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-[#999] hover:bg-[#2A2A2A] hover:text-white w-full transition-all duration-200 outline-none">
+          <DropdownMenuTrigger className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-[#666] hover:bg-[#FA5D29]/10 hover:text-[#FA5D29] w-full transition-all duration-200 outline-none">
             {session?.user?.image ? (
               <img
                 src={session.user.image}

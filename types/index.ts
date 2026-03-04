@@ -10,3 +10,9 @@ export type DocumentType = "mermaid" | "api_spec" | "arch_design" | "dev_plan" |
 export type DiagramType = "architecture" | "er" | "flow" | "sequence" | "class" | "other";
 export type SessionStatus = "active" | "archived" | "completed";
 export type MessageRole = "user" | "assistant" | "system";
+
+export type StreamStep = {
+  id: string;
+  label: string;
+  status: "running" | "done" | "error";
+};

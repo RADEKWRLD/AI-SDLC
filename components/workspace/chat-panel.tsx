@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Send, Square, Copy, Check } from "lucide-react";
+import { Send, Square, Copy, Check, CheckCircle2, Loader2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   ChatContainerRoot,
@@ -21,17 +21,17 @@ import {
   PromptInputActions,
   PromptInputAction,
 } from "@/components/ui/prompt-input";
-import type { Message as MessageType } from "@/types";
+import type { Message as MessageType, StreamStep } from "@/types";
 
 interface ChatPanelProps {
   sessionId: string;
   messages: MessageType[];
   onSend: (content: string) => Promise<void>;
   isSending: boolean;
-  streamStatus?: string;
+  streamSteps?: StreamStep[];
 }
 
-export function ChatPanel({ sessionId, messages, onSend, isSending, streamStatus }: ChatPanelProps) {
+export function ChatPanel({ sessionId, messages, onSend, isSending, streamSteps = [] }: ChatPanelProps) {
   const [input, setInput] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
@@ -53,7 +53,7 @@ export function ChatPanel({ sessionId, messages, onSend, isSending, streamStatus
       {/* Messages */}
       <ChatContainerRoot className="flex-1">
         <ChatContainerContent className="p-4 space-y-4">
-          {messages.length === 0 && (
+          {messages.length === 0 && !isSending && (
             <p className="text-center text-sm text-muted-foreground mt-8">
               输入需求开始对话
             </p>
@@ -94,19 +94,45 @@ export function ChatPanel({ sessionId, messages, onSend, isSending, streamStatus
               </div>
             </Message>
           ))}
+
+          {/* Tool call timeline */}
           {isSending && (
             <Message className="justify-start">
-              <div className="bg-secondary rounded-2xl rounded-bl-md px-4 py-3">
-                {streamStatus ? (
+              <div className="bg-secondary rounded-2xl rounded-bl-md px-4 py-3 min-w-[200px]">
+                {streamSteps.length === 0 ? (
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-                    {streamStatus}
+                    <Loader2 className="size-3.5 animate-spin text-primary" />
+                    分析中...
                   </div>
                 ) : (
-                  <div className="flex gap-1">
-                    <span className="h-2 w-2 rounded-full bg-muted-foreground animate-bounce [animation-delay:0ms]" />
-                    <span className="h-2 w-2 rounded-full bg-muted-foreground animate-bounce [animation-delay:150ms]" />
-                    <span className="h-2 w-2 rounded-full bg-muted-foreground animate-bounce [animation-delay:300ms]" />
+                  <div className="space-y-2">
+                    {streamSteps.map((step) => (
+                      <div
+                        key={step.id}
+                        className="flex items-center gap-2 text-sm"
+                      >
+                        {step.status === "running" && (
+                          <Loader2 className="size-3.5 animate-spin text-primary shrink-0" />
+                        )}
+                        {step.status === "done" && (
+                          <CheckCircle2 className="size-3.5 text-green-500 shrink-0" />
+                        )}
+                        {step.status === "error" && (
+                          <XCircle className="size-3.5 text-destructive shrink-0" />
+                        )}
+                        <span
+                          className={
+                            step.status === "running"
+                              ? "text-foreground"
+                              : step.status === "error"
+                                ? "text-destructive"
+                                : "text-muted-foreground"
+                          }
+                        >
+                          {step.label}
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>

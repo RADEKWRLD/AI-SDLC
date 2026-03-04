@@ -8,9 +8,20 @@ import { Button } from "@/components/ui/button";
 import { Header } from "@/components/layout/header";
 import { ChatPanel } from "@/components/workspace/chat-panel";
 import { PreviewPanel } from "@/components/workspace/preview-panel";
-import type { Session, Message, Document } from "@/types";
+import type { Session, Message, Document, StreamStep } from "@/types";
 
 type DocTab = "mermaid" | "api_spec" | "arch_design" | "dev_plan";
+
+const AGENT_LABELS: Record<string, string> = {
+  requirement: "需求分析",
+  design: "架构设计",
+  er: "ER 图",
+  api: "API 规范",
+  plan: "发展计划",
+};
+function agentLabel(agent: string) {
+  return AGENT_LABELS[agent] || agent;
+}
 
 export default function SessionPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -24,7 +35,7 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
     dev_plan: null,
   });
   const [isSending, setIsSending] = useState(false);
-  const [streamStatus, setStreamStatus] = useState("");
+  const [streamSteps, setStreamSteps] = useState<StreamStep[]>([]);
   const [previewOpen, setPreviewOpen] = useState(true);
   const previewRef = useRef<HTMLDivElement>(null);
   const chatRef = useRef<HTMLDivElement>(null);
@@ -88,7 +99,7 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
 
   async function handleSend(content: string) {
     setIsSending(true);
-    setStreamStatus("");
+    setStreamSteps([]);
 
     // Optimistic: show user message immediately
     const optimisticMsg: Message = {
@@ -140,27 +151,52 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
               const event = JSON.parse(dataLine);
               switch (event.type) {
                 case "status":
-                  setStreamStatus(event.message);
+                  setStreamSteps((prev) => [
+                    ...prev,
+                    { id: `status-${Date.now()}`, label: event.message, status: "done" },
+                  ]);
                   break;
                 case "agents":
-                  setStreamStatus(`调用 Agent: ${event.agents.join(", ")}`);
+                  // Add each agent as a "running" step
+                  setStreamSteps((prev) => [
+                    ...prev,
+                    ...event.agents.map((a: string) => ({
+                      id: a,
+                      label: agentLabel(a),
+                      status: "running" as const,
+                    })),
+                  ]);
                   break;
                 case "agent_done":
-                  setStreamStatus(`${event.label} 生成完成`);
+                  setStreamSteps((prev) =>
+                    prev.map((s) =>
+                      s.id === event.agent ? { ...s, status: "done" as const } : s
+                    )
+                  );
                   break;
                 case "doc_saved":
-                  // Refresh documents as each one is saved
                   fetchDocuments();
-                  setStreamStatus(`${event.label} 已保存`);
                   break;
                 case "agent_error":
-                  setStreamStatus(`${event.agent} 失败: ${event.error}`);
+                  setStreamSteps((prev) =>
+                    prev.map((s) =>
+                      s.id === event.agent
+                        ? { ...s, status: "error" as const, label: `${s.label} - ${event.error}` }
+                        : s
+                    )
+                  );
                   break;
                 case "done":
-                  setStreamStatus("");
+                  // Mark all remaining running steps as done
+                  setStreamSteps((prev) =>
+                    prev.map((s) => (s.status === "running" ? { ...s, status: "done" as const } : s))
+                  );
                   break;
                 case "error":
-                  setStreamStatus(`错误: ${event.error}`);
+                  setStreamSteps((prev) => [
+                    ...prev,
+                    { id: `error-${Date.now()}`, label: event.error, status: "error" },
+                  ]);
                   break;
               }
             } catch {
@@ -176,7 +212,6 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
     // Refresh all data
     await fetchData();
     setIsSending(false);
-    setStreamStatus("");
   }
 
   function togglePreview() {
@@ -261,7 +296,7 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
             messages={messages}
             onSend={handleSend}
             isSending={isSending}
-            streamStatus={streamStatus}
+            streamSteps={streamSteps}
           />
         </div>
         <div

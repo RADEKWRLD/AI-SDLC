@@ -34,7 +34,7 @@ function Dialog({ open, onOpenChange, children }: DialogProps) {
         className="fixed inset-0 bg-black/50"
         onClick={() => onOpenChange(false)}
       />
-      <div className="relative z-50">{children}</div>
+      <div className="relative z-50 w-[90vw] max-w-lg mx-4">{children}</div>
     </div>,
     document.body
   );
@@ -50,7 +50,7 @@ function DialogContent({
   return (
     <div
       className={cn(
-        "w-[60%] max-w-2xl rounded-xl border border-[var(--border)] bg-[var(--card)] p-6 shadow-xl",
+        "w-full max-w-lg rounded-xl border border-[var(--border)] bg-[var(--card)] p-6 shadow-xl",
         className
       )}
       onClick={(e) => e.stopPropagation()}
