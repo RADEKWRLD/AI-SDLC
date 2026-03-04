@@ -1,91 +1,136 @@
-# CycleMind
+<p align="center">
+  <img src="public/logo.svg" width="80" alt="CycleMind Logo" />
+</p>
 
-**智能软件生命周期辅助系统** — 基于 AI 多 Agent 架构，将自然语言需求自动转化为结构化设计文档（架构图、ER 图、API 规范、开发计划），并支持版本追踪与持续演化。
+<h1 align="center">CycleMind</h1>
 
-## 技术栈
+<p align="center">
+  <strong>用一句话需求，生成整套设计文档</strong><br/>
+  告诉 AI 你想做什么，自动帮你画架构图、ER 图、写 API 文档和开发计划。不用手动画图，不用写模板。
+</p>
 
-- **框架**: Next.js 16 (App Router) + TypeScript
-- **样式**: Tailwind CSS v4 + shadcn/ui
-- **数据库**: Neon PostgreSQL + Drizzle ORM
-- **认证**: Auth.js v5 (邮箱密码 + GitHub OAuth)
-- **AI**: DeepSeek API (兼容 OpenAI SDK)
-- **状态管理**: Zustand
-- **图表渲染**: Mermaid.js (客户端渲染)
-- **部署**: Vercel
+<p align="center">
+  <a href="#features">Features</a> ·
+  <a href="#how-it-works">How It Works</a> ·
+  <a href="#tech-stack">Tech Stack</a> ·
+  <a href="#getting-started">Getting Started</a> ·
+  <a href="#api-reference">API Reference</a>
+</p>
 
-## 项目结构
+---
+
+## Features
+
+**5 specialized AI Agents** work in parallel to generate your design artifacts:
+
+| Agent | Output | Format |
+|-------|--------|--------|
+| Requirement | Structured requirement analysis | Markdown |
+| Design | System architecture diagram | Mermaid |
+| ER | Entity-relationship diagram | Mermaid |
+| API | RESTful API specification | Markdown |
+| Plan | Development roadmap & milestones | Markdown |
+
+- **Multi-Agent Orchestration** — An orchestrator analyzes your prompt and dispatches the right agents in parallel. Results stream back in real-time via SSE.
+- **Interactive Mermaid Rendering** — Architecture and ER diagrams render as interactive vector graphics with zoom, pan, and SVG export.
+- **Template Library** — Pre-built project templates for web apps, mobile, microservices, and more. One click to generate a full design doc set.
+- **Version Tracking** — Append-only document versioning. Every iteration creates a new version — nothing is ever overwritten.
+- **Real-time Streaming** — Server-Sent Events push agent progress to the UI as it happens. No waiting for all agents to finish.
+
+## How It Works
 
 ```
-app/              → Next.js 页面和 API 路由
-lib/              → 核心逻辑
-  ├── db/         → 数据库 schema、queries
-  ├── auth/       → 认证配置
-  ├── ai/agents/  → 多 Sub-Agent (orchestrator, requirement, design, er, api, plan)
-  ├── validations.ts → Zod 校验 schema
-  └── utils.ts    → 工具函数
-components/       → React 组件
-  ├── ui/         → shadcn/ui 基础组件
-  ├── layout/     → 布局组件
-  ├── workspace/  → 工作区组件 (聊天、Mermaid 预览、编辑器)
-  ├── session/    → 会话相关组件
-  └── auth/       → 认证组件
-stores/           → Zustand stores
-types/            → TypeScript 类型定义
-drizzle/          → 数据库迁移文件
+1. Describe → Write your system requirements in natural language
+2. Analyze  → Orchestrator parses the prompt and selects agents
+3. Generate → Multiple agents process in parallel
+4. Preview  → 5 document types render instantly in tabbed panels
+5. Iterate  → Append new requirements to evolve your design
 ```
 
-## 快速启动
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Framework | Next.js 16 (App Router) + TypeScript |
+| Styling | Tailwind CSS v4 + shadcn/ui + GSAP |
+| Database | Neon PostgreSQL + Drizzle ORM |
+| Auth | Auth.js v5 (Credentials + GitHub OAuth) |
+| AI | DeepSeek API (OpenAI SDK compatible) |
+| State | Zustand |
+| Diagrams | Mermaid.js (client-side rendering) |
+| Deploy | Vercel |
+
+## Getting Started
 
 ```bash
-# 1. 安装依赖
+# 1. Install dependencies
 pnpm install
 
-# 2. 配置环境变量
+# 2. Set up environment variables
 cp .env.example .env.local
-# 编辑 .env.local，填入以下变量：
-#   DATABASE_URL       — Neon PostgreSQL 连接串
-#   NEXTAUTH_SECRET    — Auth 密钥
-#   DEEPSEEK_API_KEY   — DeepSeek API Key
-#   GITHUB_CLIENT_ID   — GitHub OAuth (可选)
+# Fill in:
+#   DATABASE_URL        — Neon PostgreSQL connection string
+#   NEXTAUTH_SECRET     — Auth.js signing secret
+#   DEEPSEEK_API_KEY    — DeepSeek API key
+#   GITHUB_CLIENT_ID    — GitHub OAuth (optional)
 #   GITHUB_CLIENT_SECRET
 
-# 3. 推送数据库 schema
+# 3. Push database schema
 pnpm db:push
 
-# 4. 启动开发服务器
+# 4. Start dev server
 pnpm dev
 ```
 
-## 常用命令
+## Commands
 
+| Command | Description |
+|---------|-------------|
+| `pnpm dev` | Start dev server (Turbopack) |
+| `pnpm build` | Production build |
+| `pnpm db:generate` | Generate Drizzle migrations |
+| `pnpm db:push` | Push schema to database |
+| `pnpm db:studio` | Open Drizzle Studio GUI |
 
-| 命令               | 说明                       |
-| ------------------ | -------------------------- |
-| `pnpm dev`         | 启动开发服务器 (Turbopack) |
-| `pnpm build`       | 生产构建                   |
-| `pnpm db:generate` | 生成数据库迁移             |
-| `pnpm db:push`     | 推送 schema 到数据库       |
-| `pnpm db:studio`   | Drizzle Studio GUI         |
+## Project Structure
 
-## API 接口概览
+```
+app/                → Pages & API routes
+lib/
+  ├── ai/agents/    → Multi-agent system (orchestrator + 5 sub-agents)
+  ├── auth/         → Auth.js configuration
+  ├── db/           → Drizzle schema, queries
+  └── validations   → Zod schemas
+components/
+  ├── ui/           → shadcn/ui base components
+  ├── layout/       → Sidebar, header
+  └── workspace/    → Chat panel, Mermaid renderer, preview tabs
+stores/             → Zustand stores
+types/              → TypeScript type definitions
+```
 
-所有接口（除注册外）均需认证。详细请求/响应格式见 [ARCH.md](ARCH.md#api-接口详细规范)。
+## API Reference
 
+All endpoints (except register) require authentication.
 
-| 方法     | 路径                           | 说明                      |
-| -------- | ------------------------------ | ------------------------- |
-| POST     | `/api/register`                | 用户注册                  |
-| GET/POST | `/api/auth/[...nextauth]`      | Auth.js 认证              |
-| GET      | `/api/user`                    | 获取用户信息              |
-| PATCH    | `/api/user`                    | 更新用户信息              |
-| GET      | `/api/sessions`                | 会话列表                  |
-| POST     | `/api/sessions`                | 创建会话                  |
-| GET      | `/api/sessions/[id]`           | 会话详情                  |
-| PATCH    | `/api/sessions/[id]`           | 更新会话                  |
-| DELETE   | `/api/sessions/[id]`           | 删除会话                  |
-| GET      | `/api/sessions/[id]/messages`  | 获取消息列表              |
-| POST     | `/api/sessions/[id]/messages`  | 发送消息                  |
-| GET      | `/api/sessions/[id]/documents` | 获取文档列表              |
-| POST     | `/api/sessions/[id]/documents` | 创建文档                  |
-| GET      | `/api/templates`               | 获取模板列表              |
-| POST     | `/api/generate`                | AI 多 Agent 生成 (SSE 流) |
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/api/register` | User registration |
+| GET/POST | `/api/auth/[...nextauth]` | Auth.js authentication |
+| GET/PATCH | `/api/user` | User profile |
+| GET/POST | `/api/sessions` | List / create sessions |
+| GET/PATCH/DELETE | `/api/sessions/[id]` | Session CRUD |
+| GET/POST | `/api/sessions/[id]/messages` | Messages |
+| GET/POST | `/api/sessions/[id]/documents` | Documents |
+| GET | `/api/templates` | Template library |
+| POST | `/api/generate` | AI multi-agent generation (SSE stream) |
+
+## License
+
+MIT
+
+---
+
+<p align="center">
+  Built by <a href="https://github.com/RADEKWRLD">RADEKWRLD</a>
+</p>
