@@ -4,6 +4,8 @@ import { useState, useRef, useEffect } from "react";
 import { Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import type { Message } from "@/types";
 
 interface ChatPanelProps {
@@ -52,13 +54,19 @@ export function ChatPanel({ sessionId, messages, onSend, isSending, streamStatus
             className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
           >
             <div
-              className={`max-w-[80%] px-4 py-3 text-sm whitespace-pre-wrap ${
+              className={`max-w-[80%] px-4 py-3 text-sm ${
                 msg.role === "user"
-                  ? "bg-[var(--primary)] text-white rounded-2xl rounded-br-md"
+                  ? "bg-[var(--primary)] text-white rounded-2xl rounded-br-md whitespace-pre-wrap"
                   : "bg-[var(--secondary)] text-[var(--secondary-foreground)] rounded-2xl rounded-bl-md"
               }`}
             >
-              {msg.content}
+              {msg.role === "user" ? (
+                msg.content
+              ) : (
+                <div className="prose prose-sm max-w-none dark:prose-invert prose-p:my-1 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-headings:my-2">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
+                </div>
+              )}
             </div>
           </div>
         ))}
