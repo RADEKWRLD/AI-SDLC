@@ -34,7 +34,7 @@ export function MermaidRenderer({ code, className, onSvgChange }: MermaidRendere
 
   useEffect(() => {
     import("mermaid").then((m) => {
-      m.default.initialize({ startOnLoad: false, theme: "default", securityLevel: "loose" });
+      m.default.initialize({ startOnLoad: false, theme: "default", securityLevel: "strict" });
       setMermaidLoaded(true);
     });
   }, []);

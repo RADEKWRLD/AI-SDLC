@@ -112,11 +112,15 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
     setMessages((prev) => [...prev, optimisticMsg]);
 
     // Save user message to DB
-    await fetch(`/api/sessions/${id}/messages`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content }),
-    });
+    try {
+      await fetch(`/api/sessions/${id}/messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content }),
+      });
+    } catch (err) {
+      console.error("Failed to save message:", err);
+    }
 
     // Call AI generation via SSE
     try {
@@ -207,14 +211,18 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
                   ]);
                   break;
               }
-            } catch {
-              // ignore parse errors
+            } catch (parseErr) {
+              console.warn("SSE parse error:", parseErr);
             }
           }
         }
       }
     } catch (err) {
       console.error("Generation failed:", err);
+      setStreamSteps((prev) => [
+        ...prev,
+        { id: `error-${Date.now()}`, label: "网络错误，请重试", status: "error" },
+      ]);
     }
 
     // Refresh all data

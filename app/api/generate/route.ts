@@ -1,3 +1,4 @@
+import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getSessionById } from "@/lib/db/queries/sessions";
 import { getLatestDocument, createDocument } from "@/lib/db/queries/documents";
@@ -17,19 +18,25 @@ function sseEvent(data: Record<string, unknown>): string {
 export async function POST(req: Request) {
   const session = await auth();
   if (!session?.user?.id) {
-    return new Response("Unauthorized", { status: 401 });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = await req.json();
-  const { sessionId, prompt } = body;
+  let body: Record<string, unknown>;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
+  const { sessionId, prompt } = body as { sessionId?: string; prompt?: string };
 
   if (!sessionId || !prompt) {
-    return new Response("Missing fields", { status: 400 });
+    return NextResponse.json({ error: "Missing fields" }, { status: 400 });
   }
 
   const sessionData = await getSessionById(sessionId);
   if (!sessionData || sessionData.userId !== session.user.id) {
-    return new Response("Not found", { status: 404 });
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
   const encoder = new TextEncoder();

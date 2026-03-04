@@ -1,27 +1,13 @@
-import { readFileSync } from "fs";
-import { resolve } from "path";
-
-// Load .env.local manually
-const envPath = resolve(process.cwd(), ".env.local");
-const envContent = readFileSync(envPath, "utf-8");
-for (const line of envContent.split("\n")) {
-  const trimmed = line.trim();
-  if (!trimmed || trimmed.startsWith("#")) continue;
-  const eqIdx = trimmed.indexOf("=");
-  if (eqIdx === -1) continue;
-  const key = trimmed.slice(0, eqIdx).trim();
-  let val = trimmed.slice(eqIdx + 1).trim();
-  if ((val.startsWith("'") && val.endsWith("'")) || (val.startsWith('"') && val.endsWith('"'))) {
-    val = val.slice(1, -1);
-  }
-  if (!process.env[key]) process.env[key] = val;
-}
-
+import "dotenv/config";
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import { templates } from "./schema";
 
-const sql = neon(process.env.DATABASE_URL!);
+if (!process.env.DATABASE_URL) {
+  throw new Error("DATABASE_URL is required. Create a .env.local file.");
+}
+
+const sql = neon(process.env.DATABASE_URL);
 const db = drizzle(sql);
 
 const builtinTemplates = [

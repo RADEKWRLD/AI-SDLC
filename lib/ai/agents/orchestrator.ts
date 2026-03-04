@@ -4,12 +4,13 @@ import { ORCHESTRATOR_PROMPT } from "@/lib/ai/prompts";
 export type AgentType = "requirement" | "design" | "er" | "api" | "plan";
 
 export async function orchestrate(prompt: string): Promise<AgentType[]> {
+  const safePrompt = prompt.slice(0, 10000);
   try {
     const response = await ai.chat.completions.create({
       model: AI_MODEL,
       messages: [
         { role: "system", content: ORCHESTRATOR_PROMPT },
-        { role: "user", content: prompt },
+        { role: "user", content: safePrompt },
       ],
       temperature: 0.1,
       max_tokens: 200,

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { Plus, User, LogOut } from "lucide-react";
 import {
@@ -14,6 +15,7 @@ import { SidebarRecent } from "./sidebar-recent";
 import { SidebarTemplates } from "./sidebar-templates";
 
 export function Sidebar() {
+  const router = useRouter();
   const { data: session } = useSession();
 
   return (
@@ -66,7 +68,7 @@ export function Sidebar() {
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56">
             <DropdownMenuItem
-              onClick={() => (window.location.href = "/profile")}
+              onClick={() => router.push("/profile")}
             >
               <User className="h-4 w-4" />
               个人资料

@@ -8,6 +8,7 @@ import {
   pgEnum,
   primaryKey,
   boolean,
+  index,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
@@ -109,7 +110,9 @@ export const sessions = pgTable("sessions", {
   status: sessionStatusEnum("status").default("active").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+}, (t) => [
+  index("sessions_user_id_idx").on(t.userId),
+]);
 
 export const documents = pgTable("documents", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -123,7 +126,9 @@ export const documents = pgTable("documents", {
   version: integer("version").notNull().default(1),
   parentVersionId: uuid("parent_version_id"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+}, (t) => [
+  index("documents_session_id_idx").on(t.sessionId),
+]);
 
 export const messages = pgTable("messages", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -134,7 +139,9 @@ export const messages = pgTable("messages", {
   content: text("content").notNull(),
   metadata: jsonb("metadata").default({}),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+}, (t) => [
+  index("messages_session_id_idx").on(t.sessionId),
+]);
 
 export const templates = pgTable("templates", {
   id: uuid("id").defaultRandom().primaryKey(),

@@ -8,7 +8,13 @@ export const loginSchema = z.object({
 export const registerSchema = z.object({
   name: z.string().min(1, "请输入用户名"),
   email: z.email("请输入有效的邮箱地址"),
-  password: z.string().min(6, "密码至少 6 个字符"),
+  password: z
+    .string()
+    .min(8, "密码至少 8 个字符")
+    .max(100, "密码不能超过 100 个字符")
+    .regex(/[a-z]/, "密码需包含小写字母")
+    .regex(/[A-Z]/, "密码需包含大写字母")
+    .regex(/[0-9]/, "密码需包含数字"),
 });
 
 export const createSessionSchema = z.object({
