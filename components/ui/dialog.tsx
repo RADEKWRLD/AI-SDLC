@@ -50,7 +50,7 @@ function DialogContent({
   return (
     <div
       className={cn(
-        "w-full max-w-md rounded-xl border border-[var(--border)] bg-[var(--card)] p-6 shadow-xl",
+        "w-[60%] max-w-2xl rounded-xl border border-[var(--border)] bg-[var(--card)] p-6 shadow-xl",
         className
       )}
       onClick={(e) => e.stopPropagation()}

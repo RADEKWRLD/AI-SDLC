@@ -3,24 +3,52 @@
 import { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Header } from "@/components/layout/header";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { ProjectCard } from "@/components/dashboard/project-card";
 import type { Session } from "@/types";
 
 export default function DashboardPage() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showCreate, setShowCreate] = useState(false);
+
+  // Unified form dialog: editingSession === null means "create", otherwise "edit"
+  const [formOpen, setFormOpen] = useState(false);
+  const [editingSession, setEditingSession] = useState<Session | null>(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [creating, setCreating] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState("");
 
   useEffect(() => {
     fetchSessions();
   }, []);
+
+  function openCreate() {
+    setEditingSession(null);
+    setTitle("");
+    setDescription("");
+    setFormError("");
+    setFormOpen(true);
+  }
+
+  function openEdit(session: Session) {
+    setEditingSession(session);
+    setTitle(session.title);
+    setDescription(session.description || "");
+    setFormError("");
+    setFormOpen(true);
+  }
+
+  function closeForm() {
+    setFormOpen(false);
+    setEditingSession(null);
+    setTitle("");
+    setDescription("");
+    setFormError("");
+  }
 
   async function fetchSessions() {
     const res = await fetch("/api/sessions");
@@ -31,21 +59,36 @@ export default function DashboardPage() {
     setLoading(false);
   }
 
-  async function handleCreate(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setCreating(true);
-    const res = await fetch("/api/sessions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, description }),
-    });
-    if (res.ok) {
-      setTitle("");
-      setDescription("");
-      setShowCreate(false);
-      fetchSessions();
+    setSubmitting(true);
+    setFormError("");
+    try {
+      if (editingSession) {
+        const res = await fetch(`/api/sessions/${editingSession.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title, description }),
+        });
+        if (!res.ok) throw new Error();
+        setSessions((prev) =>
+          prev.map((s) => (s.id === editingSession.id ? { ...s, title, description } : s))
+        );
+      } else {
+        const res = await fetch("/api/sessions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title, description }),
+        });
+        if (!res.ok) throw new Error();
+        fetchSessions();
+      }
+      closeForm();
+    } catch {
+      setFormError(editingSession ? "保存失败，请重试" : "创建失败，请重试");
+    } finally {
+      setSubmitting(false);
     }
-    setCreating(false);
   }
 
   const statusLabel: Record<string, string> = {
@@ -53,18 +96,6 @@ export default function DashboardPage() {
     completed: "已完成",
     archived: "已归档",
   };
-
-  async function handleEdit(id: string, data: { title: string; description: string }) {
-    const res = await fetch(`/api/sessions/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    if (!res.ok) throw new Error("Failed to update");
-    setSessions((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, ...data } : s))
-    );
-  }
 
   async function handleDelete(id: string) {
     const res = await fetch(`/api/sessions/${id}`, { method: "DELETE" });
@@ -81,40 +112,42 @@ export default function DashboardPage() {
             <h2 className="text-3xl font-bold tracking-tight">我的项目</h2>
             <p className="text-[var(--muted-foreground)] mt-1">管理你的 AI 辅助设计项目</p>
           </div>
-          <Button onClick={() => setShowCreate(!showCreate)} size="lg">
+          <Button onClick={openCreate} size="lg">
             <Plus className="h-4 w-4" />
             新建项目
           </Button>
         </div>
 
-        {showCreate && (
-          <Card className="mb-6">
-            <CardContent className="pt-6">
-              <form onSubmit={handleCreate} className="space-y-4">
-                <Input
-                  placeholder="项目标题"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  required
-                />
-                <Textarea
-                  placeholder="初始需求描述（可选）"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  rows={3}
-                />
-                <div className="flex gap-2 justify-end">
-                  <Button variant="outline" type="button" onClick={() => setShowCreate(false)}>
-                    取消
-                  </Button>
-                  <Button type="submit" disabled={creating}>
-                    {creating ? "创建中..." : "创建"}
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-        )}
+        <Dialog open={formOpen} onOpenChange={(open) => { if (!open) closeForm(); }}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{editingSession ? "编辑项目" : "新建项目"}</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <Input
+                placeholder="项目标题"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                required
+              />
+              <Textarea
+                placeholder={editingSession ? "项目描述（可选）" : "初始需求描述（可选）"}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={3}
+              />
+              {formError && <p className="text-sm text-[var(--destructive)]">{formError}</p>}
+              <DialogFooter>
+                <Button variant="outline" type="button" onClick={closeForm}>
+                  取消
+                </Button>
+                <Button type="submit" disabled={submitting}>
+                  {submitting ? (editingSession ? "保存中..." : "创建中...") : (editingSession ? "保存" : "创建")}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
 
         {loading ? (
           <p className="text-center text-[var(--muted-foreground)] py-12">加载中...</p>
@@ -125,7 +158,7 @@ export default function DashboardPage() {
             </div>
             <p className="text-lg font-semibold mb-2">还没有项目</p>
             <p className="text-[var(--muted-foreground)] mb-6">创建你的第一个 AI 辅助设计项目</p>
-            <Button onClick={() => setShowCreate(true)} size="lg">
+            <Button onClick={openCreate} size="lg">
               <Plus className="h-4 w-4" />
               新建项目
             </Button>
@@ -137,7 +170,7 @@ export default function DashboardPage() {
                 key={s.id}
                 session={s}
                 statusLabel={statusLabel}
-                onEdit={handleEdit}
+                onRequestEdit={openEdit}
                 onDelete={handleDelete}
               />
             ))}
