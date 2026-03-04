@@ -27,6 +27,7 @@ export function PreviewPanel({ documents, onSaveDocument }: PreviewPanelProps) {
   const [viewMode, setViewMode] = useState<"preview" | "edit">("preview");
   const [editContent, setEditContent] = useState("");
   const [saving, setSaving] = useState(false);
+  const [currentSvg, setCurrentSvg] = useState("");
 
   const currentDoc = documents[activeTab];
   const content = currentDoc?.content || "";
@@ -42,6 +43,32 @@ export function PreviewPanel({ documents, onSaveDocument }: PreviewPanelProps) {
     setViewMode("preview");
     setSaving(false);
   }
+
+  const handleSvgChange = useCallback((svg: string) => {
+    setCurrentSvg(svg);
+  }, []);
+
+  function handleDownload() {
+    if (activeTab === "mermaid" && currentSvg) {
+      const blob = new Blob([currentSvg], { type: "image/svg+xml" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "diagram.svg";
+      a.click();
+      URL.revokeObjectURL(url);
+    } else if (content) {
+      const blob = new Blob([content], { type: "text/plain" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${activeTab}.md`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+  }
+
+  const canDownload = activeTab === "mermaid" ? !!currentSvg : !!content;
 
   return (
     <div className="flex flex-col h-full">
@@ -66,6 +93,15 @@ export function PreviewPanel({ documents, onSaveDocument }: PreviewPanelProps) {
           <Button
             variant="ghost"
             size="sm"
+            onClick={handleDownload}
+            disabled={!canDownload}
+            title="导出下载"
+          >
+            <Download className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => setViewMode("preview")}
             className={viewMode === "preview" ? "bg-[var(--secondary)]" : ""}
           >
@@ -86,7 +122,7 @@ export function PreviewPanel({ documents, onSaveDocument }: PreviewPanelProps) {
       <div className={`flex-1 ${viewMode === "preview" && activeTab === "mermaid" ? "overflow-hidden" : "overflow-auto p-4"}`}>
         {viewMode === "preview" ? (
           activeTab === "mermaid" ? (
-            <MermaidRenderer code={content} className="h-full" />
+            <MermaidRenderer code={content} className="h-full" onSvgChange={handleSvgChange} />
           ) : content ? (
             <MarkdownRenderer>{content}</MarkdownRenderer>
           ) : (

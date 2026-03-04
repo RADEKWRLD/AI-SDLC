@@ -1,15 +1,31 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { Send } from "lucide-react";
+import { useState } from "react";
+import { Send, Square, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { MarkdownRenderer } from "@/components/ui/markdown-renderer";
-import type { Message } from "@/types";
+import {
+  ChatContainerRoot,
+  ChatContainerContent,
+  ChatContainerScrollAnchor,
+} from "@/components/ui/chat-container";
+import { ScrollButton } from "@/components/ui/scroll-button";
+import {
+  Message,
+  MessageContent,
+  MessageActions,
+  MessageAction,
+} from "@/components/ui/message";
+import {
+  PromptInput,
+  PromptInputTextarea,
+  PromptInputActions,
+  PromptInputAction,
+} from "@/components/ui/prompt-input";
+import type { Message as MessageType } from "@/types";
 
 interface ChatPanelProps {
   sessionId: string;
-  messages: Message[];
+  messages: MessageType[];
   onSend: (content: string) => Promise<void>;
   isSending: boolean;
   streamStatus?: string;
@@ -17,94 +33,124 @@ interface ChatPanelProps {
 
 export function ChatPanel({ sessionId, messages, onSend, isSending, streamStatus }: ChatPanelProps) {
   const [input, setInput] = useState("");
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, streamStatus]);
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleSubmit() {
     if (!input.trim() || isSending) return;
     const content = input.trim();
     setInput("");
     await onSend(content);
   }
 
-  function handleKeyDown(e: React.KeyboardEvent) {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit(e);
-    }
+  function handleCopy(id: string, content: string) {
+    navigator.clipboard.writeText(content);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
   }
 
   return (
     <div className="flex flex-col h-full">
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.length === 0 && (
-          <p className="text-center text-sm text-[var(--muted-foreground)] mt-8">
-            输入需求开始对话
-          </p>
-        )}
-        {messages.map((msg) => (
-          <div
-            key={msg.id}
-            className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-          >
-            <div
-              className={`max-w-[80%] px-4 py-3 text-sm ${
-                msg.role === "user"
-                  ? "bg-[var(--primary)] text-white rounded-2xl rounded-br-md whitespace-pre-wrap"
-                  : "bg-[var(--secondary)] text-[var(--secondary-foreground)] rounded-2xl rounded-bl-md"
-              }`}
+      <ChatContainerRoot className="flex-1">
+        <ChatContainerContent className="p-4 space-y-4">
+          {messages.length === 0 && (
+            <p className="text-center text-sm text-muted-foreground mt-8">
+              输入需求开始对话
+            </p>
+          )}
+          {messages.map((msg) => (
+            <Message
+              key={msg.id}
+              className={msg.role === "user" ? "justify-end" : "justify-start"}
             >
-              {msg.role === "user" ? (
-                msg.content
-              ) : (
-                <MarkdownRenderer compact>{msg.content}</MarkdownRenderer>
-              )}
-            </div>
-          </div>
-        ))}
-        {isSending && (
-          <div className="flex justify-start">
-            <div className="bg-[var(--secondary)] rounded-2xl rounded-bl-md px-4 py-3">
-              {streamStatus ? (
-                <div className="flex items-center gap-2 text-sm text-[var(--muted-foreground)]">
-                  <span className="h-2 w-2 rounded-full bg-[var(--primary)] animate-pulse" />
-                  {streamStatus}
-                </div>
-              ) : (
-                <div className="flex gap-1">
-                  <span className="h-2 w-2 rounded-full bg-[var(--muted-foreground)] animate-bounce [animation-delay:0ms]" />
-                  <span className="h-2 w-2 rounded-full bg-[var(--muted-foreground)] animate-bounce [animation-delay:150ms]" />
-                  <span className="h-2 w-2 rounded-full bg-[var(--muted-foreground)] animate-bounce [animation-delay:300ms]" />
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-        <div ref={bottomRef} />
-      </div>
+              <div className="flex flex-col gap-1 max-w-[80%]">
+                <MessageContent
+                  markdown={msg.role === "assistant"}
+                  className={
+                    msg.role === "user"
+                      ? "bg-primary text-primary-foreground rounded-2xl rounded-br-md px-4 py-3 text-sm whitespace-pre-wrap"
+                      : "bg-secondary text-secondary-foreground rounded-2xl rounded-bl-md px-4 py-3 text-sm"
+                  }
+                >
+                  {msg.content}
+                </MessageContent>
+                {msg.role === "assistant" && (
+                  <MessageActions className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <MessageAction tooltip="复制">
+                      <Button
+                        variant="ghost"
+                        size="icon-xs"
+                        onClick={() => handleCopy(msg.id, msg.content)}
+                      >
+                        {copiedId === msg.id ? (
+                          <Check className="size-3 text-green-500" />
+                        ) : (
+                          <Copy className="size-3" />
+                        )}
+                      </Button>
+                    </MessageAction>
+                  </MessageActions>
+                )}
+              </div>
+            </Message>
+          ))}
+          {isSending && (
+            <Message className="justify-start">
+              <div className="bg-secondary rounded-2xl rounded-bl-md px-4 py-3">
+                {streamStatus ? (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                    {streamStatus}
+                  </div>
+                ) : (
+                  <div className="flex gap-1">
+                    <span className="h-2 w-2 rounded-full bg-muted-foreground animate-bounce [animation-delay:0ms]" />
+                    <span className="h-2 w-2 rounded-full bg-muted-foreground animate-bounce [animation-delay:150ms]" />
+                    <span className="h-2 w-2 rounded-full bg-muted-foreground animate-bounce [animation-delay:300ms]" />
+                  </div>
+                )}
+              </div>
+            </Message>
+          )}
+        </ChatContainerContent>
+        <ChatContainerScrollAnchor />
+
+        {/* Scroll to bottom button */}
+        <div className="absolute bottom-20 right-4 z-10">
+          <ScrollButton />
+        </div>
+      </ChatContainerRoot>
 
       {/* Input */}
-      <form onSubmit={handleSubmit} className="p-4 bg-[var(--card)]">
-        <div className="flex gap-2">
-          <Textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
+      <div className="p-4 bg-card">
+        <PromptInput
+          value={input}
+          onValueChange={setInput}
+          isLoading={isSending}
+          onSubmit={handleSubmit}
+        >
+          <PromptInputTextarea
             placeholder="输入你的需求..."
-            rows={2}
-            className="resize-none"
             disabled={isSending}
           />
-          <Button type="submit" size="icon" className="rounded-full" disabled={isSending || !input.trim()}>
-            <Send className="h-4 w-4" />
-          </Button>
-        </div>
-      </form>
+          <PromptInputActions className="justify-end px-2 pb-2">
+            <PromptInputAction tooltip={isSending ? "停止" : "发送"}>
+              <Button
+                size="sm"
+                className="rounded-full h-8 w-8"
+                disabled={!isSending && !input.trim()}
+                onClick={handleSubmit}
+              >
+                {isSending ? (
+                  <Square className="size-3 fill-current" />
+                ) : (
+                  <Send className="size-4" />
+                )}
+              </Button>
+            </PromptInputAction>
+          </PromptInputActions>
+        </PromptInput>
+      </div>
     </div>
   );
 }
