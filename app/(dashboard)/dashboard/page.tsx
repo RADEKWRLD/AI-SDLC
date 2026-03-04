@@ -60,10 +60,13 @@ export default function DashboardPage() {
   return (
     <>
       <Header title="工作台" />
-      <div className="p-6 max-w-5xl mx-auto w-full">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold">我的项目</h2>
-          <Button onClick={() => setShowCreate(!showCreate)}>
+      <div className="p-8 max-w-5xl mx-auto w-full">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h2 className="text-3xl font-bold tracking-tight">我的项目</h2>
+            <p className="text-[var(--muted-foreground)] mt-1">管理你的 AI 辅助设计项目</p>
+          </div>
+          <Button onClick={() => setShowCreate(!showCreate)} size="lg">
             <Plus className="h-4 w-4" />
             新建项目
           </Button>
@@ -101,18 +104,22 @@ export default function DashboardPage() {
         {loading ? (
           <p className="text-center text-[var(--muted-foreground)] py-12">加载中...</p>
         ) : sessions.length === 0 ? (
-          <div className="text-center py-20">
-            <p className="text-[var(--muted-foreground)] mb-4">还没有项目，创建第一个吧</p>
-            <Button onClick={() => setShowCreate(true)}>
+          <div className="text-center py-24">
+            <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-[var(--primary)]/10 mb-6">
+              <Plus className="h-8 w-8 text-[var(--primary)]" />
+            </div>
+            <p className="text-lg font-semibold mb-2">还没有项目</p>
+            <p className="text-[var(--muted-foreground)] mb-6">创建你的第一个 AI 辅助设计项目</p>
+            <Button onClick={() => setShowCreate(true)} size="lg">
               <Plus className="h-4 w-4" />
               新建项目
             </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {sessions.map((s) => (
               <Link key={s.id} href={`/session/${s.id}`}>
-                <Card className="hover:shadow-md transition cursor-pointer h-full">
+                <Card className="card-hover cursor-pointer h-full">
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-base">{s.title}</CardTitle>

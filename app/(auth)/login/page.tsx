@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -35,66 +34,73 @@ export default function LoginPage() {
   }
 
   return (
-    <Card className="w-full max-w-md">
-      <CardHeader className="text-center">
-        <CardTitle>登录 AI-SDLC</CardTitle>
-        <CardDescription>智能软件生命周期辅助系统</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
+    <div className="w-full max-w-md">
+      {/* Mobile-only logo */}
+      <div className="lg:hidden text-center mb-8">
+        <h1 className="text-2xl font-extrabold tracking-tight">AI-SDLC</h1>
+      </div>
+
+      <div className="space-y-2 mb-8">
+        <h2 className="text-3xl font-bold tracking-tight">登录</h2>
+        <p className="text-[var(--muted-foreground)]">智能软件生命周期辅助系统</p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-5">
+        {error && (
+          <div className="p-3 rounded-lg bg-red-50 border border-red-200">
             <p className="text-sm text-[var(--destructive)] text-center">{error}</p>
-          )}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">邮箱</label>
-            <Input
-              type="email"
-              placeholder="your@email.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
           </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">密码</label>
-            <Input
-              type="password"
-              placeholder="至少 6 个字符"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "登录中..." : "登录"}
-          </Button>
-        </form>
-
-        <div className="mt-4 space-y-3">
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-[var(--border)]" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-[var(--card)] px-2 text-[var(--muted-foreground)]">或</span>
-            </div>
-          </div>
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={() => signIn("github", { callbackUrl: "/dashboard" })}
-          >
-            GitHub 登录
-          </Button>
+        )}
+        <div className="space-y-2">
+          <label className="text-sm font-semibold">邮箱</label>
+          <Input
+            type="email"
+            placeholder="your@email.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
         </div>
+        <div className="space-y-2">
+          <label className="text-sm font-semibold">密码</label>
+          <Input
+            type="password"
+            placeholder="至少 6 个字符"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </div>
+        <Button type="submit" className="w-full" size="lg" disabled={loading}>
+          {loading ? "登录中..." : "登录"}
+        </Button>
+      </form>
 
-        <p className="mt-4 text-center text-sm text-[var(--muted-foreground)]">
-          没有账号？{" "}
-          <Link href="/register" className="text-[var(--primary)] hover:underline">
-            注册
-          </Link>
-        </p>
-      </CardContent>
-    </Card>
+      <div className="mt-6 space-y-4">
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t border-[var(--border)]" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-[var(--background)] px-3 text-[var(--muted-foreground)] font-medium">或</span>
+          </div>
+        </div>
+        <Button
+          variant="outline"
+          className="w-full"
+          size="lg"
+          onClick={() => signIn("github", { callbackUrl: "/dashboard" })}
+        >
+          GitHub 登录
+        </Button>
+      </div>
+
+      <p className="mt-6 text-center text-sm text-[var(--muted-foreground)]">
+        没有账号？{" "}
+        <Link href="/register" className="text-[var(--primary)] font-semibold hover:underline">
+          注册
+        </Link>
+      </p>
+    </div>
   );
 }

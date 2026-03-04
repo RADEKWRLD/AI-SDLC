@@ -121,7 +121,7 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
   return (
     <>
       <Header title={session?.title || "加载中..."} />
-      <div className="flex items-center gap-2 px-4 py-2 border-b border-[var(--border)]">
+      <div className="flex items-center gap-3 px-6 py-3 border-b border-[var(--border)] bg-[var(--card)]/50">
         <Button variant="ghost" size="sm" onClick={() => router.push("/dashboard")}>
           <ArrowLeft className="h-4 w-4 mr-1" />
           返回
@@ -132,8 +132,8 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
           </span>
         )}
       </div>
-      <div className="flex-1 flex h-[calc(100vh-7rem)]">
-        <div className="w-2/5 min-w-[300px] border-r border-[var(--border)]">
+      <div className="flex-1 flex h-[calc(100vh-8rem)]">
+        <div className="w-[420px] min-w-[320px] border-r border-[var(--border)]">
           <ChatPanel
             sessionId={id}
             messages={messages}

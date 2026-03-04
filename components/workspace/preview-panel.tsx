@@ -53,10 +53,10 @@ export function PreviewPanel({ documents, onSaveDocument }: PreviewPanelProps) {
             <button
               key={tab.key}
               onClick={() => { setActiveTab(tab.key); setViewMode("preview"); }}
-              className={`px-4 py-3 text-sm border-b-2 transition ${
+              className={`px-4 py-3 text-sm border-b-2 transition-all duration-300 ${
                 activeTab === tab.key
-                  ? "border-[var(--primary)] text-[var(--foreground)] font-medium"
-                  : "border-transparent text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+                  ? "border-[var(--primary)] text-[var(--foreground)] font-semibold"
+                  : "border-transparent text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:border-[var(--border)]"
               }`}
             >
               {tab.label}
@@ -117,7 +117,8 @@ export function PreviewPanel({ documents, onSaveDocument }: PreviewPanelProps) {
 
       {/* Version info */}
       {currentDoc && (
-        <div className="px-4 py-2 border-t border-[var(--border)] text-xs text-[var(--muted-foreground)]">
+        <div className="px-4 py-2.5 border-t border-[var(--border)] text-xs text-[var(--muted-foreground)] flex items-center gap-2">
+          <span className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--primary)]" />
           版本 {currentDoc.version} · {new Date(currentDoc.createdAt).toLocaleString("zh-CN")}
         </div>
       )}

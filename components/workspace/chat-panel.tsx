@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Send, Loader2 } from "lucide-react";
+import { Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import type { Message } from "@/types";
@@ -51,10 +51,10 @@ export function ChatPanel({ sessionId, messages, onSend, isSending }: ChatPanelP
             className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
           >
             <div
-              className={`max-w-[85%] rounded-lg px-4 py-2 text-sm whitespace-pre-wrap ${
+              className={`max-w-[80%] px-4 py-3 text-sm whitespace-pre-wrap ${
                 msg.role === "user"
-                  ? "bg-[var(--primary)] text-[var(--primary-foreground)]"
-                  : "bg-[var(--secondary)] text-[var(--secondary-foreground)]"
+                  ? "bg-[var(--primary)] text-white rounded-2xl rounded-br-md"
+                  : "bg-[var(--secondary)] text-[var(--secondary-foreground)] rounded-2xl rounded-bl-md"
               }`}
             >
               {msg.content}
@@ -63,8 +63,10 @@ export function ChatPanel({ sessionId, messages, onSend, isSending }: ChatPanelP
         ))}
         {isSending && (
           <div className="flex justify-start">
-            <div className="bg-[var(--secondary)] rounded-lg px-4 py-2">
-              <Loader2 className="h-4 w-4 animate-spin" />
+            <div className="bg-[var(--secondary)] rounded-2xl rounded-bl-md px-4 py-3 flex gap-1">
+              <span className="h-2 w-2 rounded-full bg-[var(--muted-foreground)] animate-bounce [animation-delay:0ms]" />
+              <span className="h-2 w-2 rounded-full bg-[var(--muted-foreground)] animate-bounce [animation-delay:150ms]" />
+              <span className="h-2 w-2 rounded-full bg-[var(--muted-foreground)] animate-bounce [animation-delay:300ms]" />
             </div>
           </div>
         )}
@@ -83,7 +85,7 @@ export function ChatPanel({ sessionId, messages, onSend, isSending }: ChatPanelP
             className="resize-none"
             disabled={isSending}
           />
-          <Button type="submit" size="icon" disabled={isSending || !input.trim()}>
+          <Button type="submit" size="icon" className="rounded-full" disabled={isSending || !input.trim()}>
             <Send className="h-4 w-4" />
           </Button>
         </div>

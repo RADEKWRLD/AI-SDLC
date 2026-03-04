@@ -36,9 +36,12 @@ export default function ProfilePage() {
   return (
     <>
       <Header title="个人资料" />
-      <div className="p-6 max-w-4xl mx-auto w-full">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold">user.md</h2>
+      <div className="p-8 max-w-4xl mx-auto w-full">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight">user.md</h2>
+            <p className="text-sm text-[var(--muted-foreground)] mt-1">个人信息文档，AI 生成时会参考此内容</p>
+          </div>
           <div className="flex gap-2">
             <Button
               variant={viewMode === "edit" ? "default" : "outline"}
@@ -61,10 +64,6 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        <p className="text-sm text-[var(--muted-foreground)] mb-4">
-          这是你的个人信息文档，存储偏好和项目约定，AI 生成时会参考此内容。
-        </p>
-
         {loading ? (
           <p className="text-center py-12 text-[var(--muted-foreground)]">加载中...</p>
         ) : viewMode === "edit" ? (
@@ -75,7 +74,7 @@ export default function ProfilePage() {
             placeholder="# 你的名字&#10;&#10;在这里写下你的个人信息、技术偏好、项目约定..."
           />
         ) : (
-          <div className="border border-[var(--border)] rounded-md p-6 min-h-[500px] prose prose-sm max-w-none dark:prose-invert">
+          <div className="border border-[var(--border)] rounded-xl p-8 min-h-[500px] prose prose-sm max-w-none dark:prose-invert bg-[var(--card)]">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
               {userMd || "*暂无内容*"}
             </ReactMarkdown>
