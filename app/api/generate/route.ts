@@ -9,6 +9,8 @@ import { runDesignAgent } from "@/lib/ai/agents/design-agent";
 import { runERAgent } from "@/lib/ai/agents/er-agent";
 import { runAPIAgent } from "@/lib/ai/agents/api-agent";
 import { runPlanAgent } from "@/lib/ai/agents/plan-agent";
+import { AGENT_LABELS } from "@/lib/ai/agent-meta";
+import type { AgentType } from "@/lib/ai/agents/orchestrator";
 import type { PersistedAgentStep, PersistedAgentTool } from "@/types";
 
 function sseEvent(data: Record<string, unknown>): string {
@@ -28,7 +30,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { sessionId, prompt } = body as { sessionId?: string; prompt?: string };
+  const { sessionId, prompt, confirmedAgents } = body as {
+    sessionId?: string;
+    prompt?: string;
+    confirmedAgents?: AgentType[];
+  };
 
   if (!sessionId || !prompt) {
     return NextResponse.json({ error: "Missing fields" }, { status: 400 });
@@ -47,9 +53,17 @@ export async function POST(req: Request) {
       };
 
       try {
-        // Step 1: Orchestrate
-        send({ type: "status", message: "正在分析需求，决定调用哪些 Agent..." });
-        const agentsToRun = await orchestrate(prompt);
+        // Step 1: Orchestrate (skip if confirmedAgents provided)
+        let agentsToRun: AgentType[];
+        if (confirmedAgents && confirmedAgents.length > 0) {
+          agentsToRun = confirmedAgents.filter((a): a is AgentType =>
+            ["requirement", "design", "er", "api", "plan"].includes(a)
+          );
+          send({ type: "status", message: "开始执行已确认的 Agent..." });
+        } else {
+          send({ type: "status", message: "正在分析需求，决定调用哪些 Agent..." });
+          agentsToRun = await orchestrate(prompt);
+        }
         send({ type: "agents", agents: agentsToRun });
 
         // Step 2: Get existing documents for context
@@ -58,20 +72,15 @@ export async function POST(req: Request) {
 
         // Step 3: Run agents — fire all, stream as each completes
         const savedDocs: string[] = [];
+        const statusLabel = confirmedAgents ? "开始执行已确认的 Agent..." : "正在分析需求，决定调用哪些 Agent...";
         const persistedSteps: PersistedAgentStep[] = [
-          { id: `step-${Date.now()}`, label: "正在分析需求，决定调用哪些 Agent...", status: "done" },
+          { id: `step-${Date.now()}`, label: statusLabel, status: "done" },
         ];
         const persistedTools: PersistedAgentTool[] = [];
 
-        const agentLabels: Record<string, string> = {
-          requirement: "需求分析",
-          design: "架构图",
-          er: "ER 图",
-          api: "API 规范",
-          plan: "发展计划",
-        };
+        const agentLabels = AGENT_LABELS;
 
-        const agentTasks: { agent: string; promise: Promise<string> }[] = [];
+        const agentTasks: { agent: AgentType; promise: Promise<string> }[] = [];
 
         for (const agent of agentsToRun) {
           let agentInput: Record<string, unknown> = { prompt };

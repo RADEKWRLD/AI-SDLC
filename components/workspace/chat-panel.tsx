@@ -23,18 +23,24 @@ import {
 } from "@/components/ui/prompt-input";
 import { Tool } from "@/components/ui/tool";
 import { PersistedThinkingChain } from "@/components/workspace/persisted-thinking-chain";
-import type { Message as MessageType, StreamStep, AgentToolPart, AgentProcessMetadata } from "@/types";
+import { AgentConfirmation } from "@/components/workspace/agent-confirmation";
+import type { Message as MessageType, StreamStep, AgentToolPart, AgentProcessMetadata, AgentConfirmationItem } from "@/types";
 
 interface ChatPanelProps {
   sessionId: string;
   messages: MessageType[];
   onSend: (content: string) => Promise<void>;
   isSending: boolean;
+  isChatting?: boolean;
+  streamingText?: string;
   streamSteps?: StreamStep[];
   agentToolParts?: Map<string, AgentToolPart>;
+  pendingConfirmation?: { agents: AgentConfirmationItem[]; prompt: string } | null;
+  onConfirm?: (selectedIds: string[]) => void;
+  onCancel?: () => void;
 }
 
-export function ChatPanel({ sessionId, messages, onSend, isSending, streamSteps = [], agentToolParts = new Map() }: ChatPanelProps) {
+export function ChatPanel({ sessionId, messages, onSend, isSending, isChatting = false, streamingText = "", streamSteps = [], agentToolParts = new Map(), pendingConfirmation, onConfirm, onCancel }: ChatPanelProps) {
   const [input, setInput] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
@@ -106,8 +112,35 @@ export function ChatPanel({ sessionId, messages, onSend, isSending, streamSteps 
             );
           })}
 
-          {/* Agent thinking chain */}
-          {isSending && (
+          {/* Streaming conversation bubble */}
+          {isChatting && (
+            <Message className="justify-start">
+              <div className="max-w-[80%]">
+                <div className="bg-secondary text-secondary-foreground rounded-2xl rounded-bl-md px-4 py-3 text-sm whitespace-pre-wrap">
+                  {streamingText || (
+                    <span className="flex items-center gap-2 text-muted-foreground">
+                      <Loader2 className="size-3.5 animate-spin text-primary" />
+                      思考中...
+                    </span>
+                  )}
+                </div>
+              </div>
+            </Message>
+          )}
+
+          {/* Agent confirmation gate */}
+          {pendingConfirmation && onConfirm && onCancel && (
+            <Message className="justify-start">
+              <AgentConfirmation
+                agents={pendingConfirmation.agents}
+                onConfirm={onConfirm}
+                onCancel={onCancel}
+              />
+            </Message>
+          )}
+
+          {/* Agent thinking chain (only during orchestrating/executing, not chatting) */}
+          {isSending && !isChatting && (
             <Message className="justify-start">
               <div className="min-w-70 max-w-[95%]">
                 {streamSteps.length === 0 && agentToolParts.size === 0 ? (
@@ -166,7 +199,7 @@ export function ChatPanel({ sessionId, messages, onSend, isSending, streamSteps 
         >
           <PromptInputTextarea
             placeholder="输入你的需求..."
-            disabled={isSending}
+            disabled={isSending || !!pendingConfirmation}
           />
           <PromptInputActions className="justify-end px-2 pb-2">
             <PromptInputAction tooltip={isSending ? "停止" : "发送"}>

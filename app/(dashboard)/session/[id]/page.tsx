@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Header } from "@/components/layout/header";
 import { ChatPanel } from "@/components/workspace/chat-panel";
 import { PreviewPanel } from "@/components/workspace/preview-panel";
-import type { Session, Message, Document, StreamStep, AgentToolPart } from "@/types";
+import { AGENT_LABELS, AGENT_DESCRIPTIONS } from "@/lib/ai/agent-meta";
+import type { Session, Message, Document, StreamStep, AgentToolPart, AgentConfirmationItem } from "@/types";
 
 type DocTab = "mermaid" | "er" | "api_spec" | "arch_design" | "dev_plan";
 
@@ -25,7 +26,14 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
     arch_design: null,
     dev_plan: null,
   });
-  const [isSending, setIsSending] = useState(false);
+  const [isChatting, setIsChatting] = useState(false);
+  const [streamingText, setStreamingText] = useState("");
+  const [isOrchestrating, setIsOrchestrating] = useState(false);
+  const [isExecuting, setIsExecuting] = useState(false);
+  const [pendingConfirmation, setPendingConfirmation] = useState<{
+    agents: AgentConfirmationItem[];
+    prompt: string;
+  } | null>(null);
   const [streamSteps, setStreamSteps] = useState<StreamStep[]>([]);
   const [agentToolParts, setAgentToolParts] = useState<Map<string, AgentToolPart>>(new Map());
   const [previewOpen, setPreviewOpen] = useState(true);
@@ -95,10 +103,17 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
     fetchData();
   }, [fetchData]);
 
+  const isSending = isChatting || isOrchestrating || isExecuting;
+
+  // Phase 1: Chat with conversation agent (streaming)
   async function handleSend(content: string) {
-    setIsSending(true);
+    if (isSending) return;
+
+    setIsChatting(true);
+    setStreamingText("");
     setStreamSteps([]);
     setAgentToolParts(new Map());
+    setPendingConfirmation(null);
 
     // Optimistic: show user message immediately
     const optimisticMsg: Message = {
@@ -111,28 +126,132 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
     };
     setMessages((prev) => [...prev, optimisticMsg]);
 
-    // Save user message to DB
+    let readyToGenerate = false;
+    let chatSummary = "";
+
     try {
-      await fetch(`/api/sessions/${id}/messages`, {
+      // User message is saved by the chat route, not here
+      const res = await fetch(`/api/sessions/${id}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content }),
       });
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const reader = res.body?.getReader();
+      const decoder = new TextDecoder();
+
+      if (reader) {
+        let buffer = "";
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n\n");
+          buffer = lines.pop() || "";
+
+          for (const line of lines) {
+            const dataLine = line.replace(/^data: /, "");
+            if (!dataLine) continue;
+            try {
+              const event = JSON.parse(dataLine);
+              switch (event.type) {
+                case "token":
+                  setStreamingText((prev) => prev + event.token);
+                  break;
+                case "done":
+                  readyToGenerate = event.readyToGenerate;
+                  chatSummary = event.content || "";
+                  break;
+                case "error":
+                  throw new Error(event.error);
+              }
+            } catch (parseErr) {
+              if (parseErr instanceof Error && parseErr.message !== "SSE parse error") {
+                throw parseErr;
+              }
+              console.warn("SSE parse error:", parseErr);
+            }
+          }
+        }
+      }
     } catch (err) {
-      console.error("Failed to save message:", err);
+      console.error("Chat failed:", err);
     }
 
-    // Call AI generation via SSE
+    // Done chatting — refresh messages from DB
+    setStreamingText("");
+    setIsChatting(false);
+
+    const messagesRes = await fetch(`/api/sessions/${id}/messages`);
+    if (messagesRes.ok) {
+      const data = await messagesRes.json();
+      setMessages(data.messages);
+    }
+
+    // If agent says ready, auto-trigger orchestration with full context
+    if (readyToGenerate) {
+      const prompt = chatSummary
+        ? `用户需求: ${content}\n\n需求总结: ${chatSummary}`
+        : content;
+      await triggerOrchestration(prompt);
+    }
+  }
+
+  // Orchestrate — get agent plan, show confirmation
+  async function triggerOrchestration(prompt: string) {
+    setIsOrchestrating(true);
+    setStreamSteps([{ id: "orch", label: "需求已就绪，正在分析...", status: "done" }]);
+
+    try {
+      const res = await fetch("/api/orchestrate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId: id, prompt }),
+      });
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const { agents } = await res.json() as { agents: string[] };
+
+      const items: AgentConfirmationItem[] = agents.map((a) => ({
+        id: a,
+        label: AGENT_LABELS[a as keyof typeof AGENT_LABELS] ?? a,
+        description: AGENT_DESCRIPTIONS[a as keyof typeof AGENT_DESCRIPTIONS] ?? "",
+        enabled: true,
+      }));
+
+      setStreamSteps([]);
+      setPendingConfirmation({ agents: items, prompt });
+    } catch (err) {
+      console.error("Orchestration failed:", err);
+      setStreamSteps([
+        { id: `error-${Date.now()}`, label: "分析失败，请重试", status: "error" },
+      ]);
+    } finally {
+      setIsOrchestrating(false);
+    }
+  }
+
+  // Phase 2: Execute confirmed agents
+  async function handleConfirm(selectedIds: string[]) {
+    if (!pendingConfirmation) return;
+    const { prompt } = pendingConfirmation;
+    setPendingConfirmation(null);
+    setIsExecuting(true);
+    setStreamSteps([]);
+    setAgentToolParts(new Map());
+
     try {
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionId: id, prompt: content }),
+        body: JSON.stringify({ sessionId: id, prompt, confirmedAgents: selectedIds }),
       });
 
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`);
-      }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
       const reader = res.body?.getReader();
       const decoder = new TextDecoder();
@@ -225,9 +344,12 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
       ]);
     }
 
-    // Refresh all data
     await fetchData();
-    setIsSending(false);
+    setIsExecuting(false);
+  }
+
+  function handleCancel() {
+    setPendingConfirmation(null);
   }
 
   function togglePreview() {
@@ -314,8 +436,13 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
             messages={messages}
             onSend={handleSend}
             isSending={isSending}
+            isChatting={isChatting}
+            streamingText={streamingText}
             streamSteps={streamSteps}
             agentToolParts={agentToolParts}
+            pendingConfirmation={pendingConfirmation}
+            onConfirm={handleConfirm}
+            onCancel={handleCancel}
           />
         </div>
         <div

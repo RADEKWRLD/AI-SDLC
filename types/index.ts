@@ -46,3 +46,10 @@ export type AgentProcessMetadata = {
   steps: PersistedAgentStep[];
   tools: PersistedAgentTool[];
 };
+
+export type AgentConfirmationItem = {
+  id: string;
+  label: string;
+  description: string;
+  enabled: boolean;
+};
