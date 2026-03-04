@@ -5,8 +5,7 @@ import { MermaidRenderer } from "./mermaid-renderer";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Eye, Code, Save } from "lucide-react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import { MarkdownRenderer } from "@/components/ui/markdown-renderer";
 import type { Document } from "@/types";
 
 type TabKey = "mermaid" | "api_spec" | "arch_design" | "dev_plan";
@@ -89,9 +88,7 @@ export function PreviewPanel({ documents, onSaveDocument }: PreviewPanelProps) {
           activeTab === "mermaid" ? (
             <MermaidRenderer code={content} className="h-full" />
           ) : content ? (
-            <div className="prose prose-sm max-w-none dark:prose-invert">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
-            </div>
+            <MarkdownRenderer>{content}</MarkdownRenderer>
           ) : (
             <p className="text-center text-sm text-[var(--muted-foreground)] mt-8">
               暂无内容，发送需求后自动生成

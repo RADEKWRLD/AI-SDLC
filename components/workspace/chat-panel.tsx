@@ -4,8 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import { MarkdownRenderer } from "@/components/ui/markdown-renderer";
 import type { Message } from "@/types";
 
 interface ChatPanelProps {
@@ -63,9 +62,7 @@ export function ChatPanel({ sessionId, messages, onSend, isSending, streamStatus
               {msg.role === "user" ? (
                 msg.content
               ) : (
-                <div className="prose prose-sm max-w-none dark:prose-invert prose-p:my-1 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-headings:my-2">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
-                </div>
+                <MarkdownRenderer compact>{msg.content}</MarkdownRenderer>
               )}
             </div>
           </div>
