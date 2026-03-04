@@ -4,13 +4,13 @@ export default function HomePage() {
   return (
     <div className="flex flex-col min-h-screen bg-[var(--background)]">
       {/* Navigation */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-[var(--background)]/80 backdrop-blur-md border-b border-[var(--border)]">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-[var(--background)]/80 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-6 lg:px-10 py-4 flex items-center justify-between">
           <h1 className="text-2xl font-extrabold tracking-tight">AI-SDLC</h1>
           <div className="flex gap-3 items-center">
             <Link
               href="/login"
-              className="px-5 py-2.5 text-sm font-semibold rounded-lg border border-[var(--border)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-all duration-300"
+              className="px-5 py-2.5 text-sm font-semibold rounded-lg bg-[var(--secondary)] hover:bg-[var(--accent)] hover:text-[var(--primary)] transition-all duration-300"
             >
               登录
             </Link>
@@ -50,7 +50,7 @@ export default function HomePage() {
                 </Link>
                 <Link
                   href="/login"
-                  className="px-8 py-4 rounded-xl border border-[var(--border)] text-base font-semibold hover:border-[var(--primary)] hover:text-[var(--primary)] transition-all duration-300"
+                  className="px-8 py-4 rounded-xl bg-[var(--secondary)] text-base font-semibold hover:bg-[var(--accent)] hover:text-[var(--primary)] transition-all duration-300"
                 >
                   已有账号
                 </Link>
@@ -85,7 +85,7 @@ export default function HomePage() {
               ].map((feature) => (
                 <div
                   key={feature.num}
-                  className="group p-8 rounded-xl border border-[var(--border)] bg-[var(--card)] card-hover"
+                  className="group p-8 rounded-xl bg-[var(--card)] shadow-[0_1px_3px_rgba(0,0,0,0.06)] card-hover"
                 >
                   <span className="text-4xl font-extrabold text-[var(--primary)]/20 group-hover:text-[var(--primary)]/40 transition-all duration-300">
                     {feature.num}
@@ -102,7 +102,7 @@ export default function HomePage() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-[var(--border)] py-8 px-6">
+      <footer className="py-8 px-6 bg-[var(--secondary)]">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <span className="text-sm text-[var(--muted-foreground)]">
             AI-SDLC - AI 驱动的软件设计自动化平台

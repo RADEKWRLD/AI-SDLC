@@ -74,7 +74,7 @@ export function ChatPanel({ sessionId, messages, onSend, isSending }: ChatPanelP
       </div>
 
       {/* Input */}
-      <form onSubmit={handleSubmit} className="p-4 border-t border-[var(--border)]">
+      <form onSubmit={handleSubmit} className="p-4 bg-[var(--card)]">
         <div className="flex gap-2">
           <Textarea
             value={input}

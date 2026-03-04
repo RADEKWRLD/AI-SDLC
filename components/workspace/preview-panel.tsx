@@ -47,16 +47,16 @@ export function PreviewPanel({ documents, onSaveDocument }: PreviewPanelProps) {
   return (
     <div className="flex flex-col h-full">
       {/* Tabs */}
-      <div className="flex items-center justify-between border-b border-[var(--border)] px-4">
+      <div className="flex items-center justify-between px-4 bg-[var(--card)]">
         <div className="flex">
           {tabs.map((tab) => (
             <button
               key={tab.key}
               onClick={() => { setActiveTab(tab.key); setViewMode("preview"); }}
-              className={`px-4 py-3 text-sm border-b-2 transition-all duration-300 ${
+              className={`px-4 py-3 text-sm rounded-lg transition-all duration-300 ${
                 activeTab === tab.key
-                  ? "border-[var(--primary)] text-[var(--foreground)] font-semibold"
-                  : "border-transparent text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:border-[var(--border)]"
+                  ? "bg-[var(--accent)] text-[var(--foreground)] font-semibold"
+                  : "text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--secondary)]"
               }`}
             >
               {tab.label}
@@ -117,7 +117,7 @@ export function PreviewPanel({ documents, onSaveDocument }: PreviewPanelProps) {
 
       {/* Version info */}
       {currentDoc && (
-        <div className="px-4 py-2.5 border-t border-[var(--border)] text-xs text-[var(--muted-foreground)] flex items-center gap-2">
+        <div className="px-4 py-2.5 bg-[var(--card)] text-xs text-[var(--muted-foreground)] flex items-center gap-2">
           <span className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--primary)]" />
           版本 {currentDoc.version} · {new Date(currentDoc.createdAt).toLocaleString("zh-CN")}
         </div>

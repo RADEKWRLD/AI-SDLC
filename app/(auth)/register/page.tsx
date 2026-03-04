@@ -62,7 +62,7 @@ export default function RegisterPage() {
 
       <form onSubmit={handleSubmit} className="space-y-5">
         {error && (
-          <div className="p-3 rounded-lg bg-red-50 border border-red-200">
+          <div className="p-3 rounded-lg bg-red-50">
             <p className="text-sm text-[var(--destructive)] text-center">{error}</p>
           </div>
         )}
@@ -104,7 +104,7 @@ export default function RegisterPage() {
       <div className="mt-6 space-y-4">
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t border-[var(--border)]" />
+            <span className="w-full h-px bg-[var(--secondary)]" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
             <span className="bg-[var(--background)] px-3 text-[var(--muted-foreground)] font-medium">或</span>

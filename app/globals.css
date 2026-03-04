@@ -88,7 +88,8 @@ a, button, [role="button"], input, textarea, select {
 /* Editorial separator */
 .separator-editorial {
   border: none;
-  border-top: 1px dashed var(--border);
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--secondary), transparent);
   margin: 2rem 0;
 }
 

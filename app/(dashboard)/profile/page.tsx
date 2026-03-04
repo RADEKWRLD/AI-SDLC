@@ -74,7 +74,7 @@ export default function ProfilePage() {
             placeholder="# 你的名字&#10;&#10;在这里写下你的个人信息、技术偏好、项目约定..."
           />
         ) : (
-          <div className="border border-[var(--border)] rounded-xl p-8 min-h-[500px] prose prose-sm max-w-none dark:prose-invert bg-[var(--card)]">
+          <div className="rounded-xl p-8 min-h-[500px] prose prose-sm max-w-none dark:prose-invert bg-[var(--card)] shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
               {userMd || "*暂无内容*"}
             </ReactMarkdown>

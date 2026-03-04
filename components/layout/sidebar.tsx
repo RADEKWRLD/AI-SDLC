@@ -16,7 +16,7 @@ export function Sidebar() {
 
   return (
     <aside className="w-64 bg-[#1A1A1A] flex flex-col h-screen sticky top-0">
-      <div className="p-5 border-b border-[#2E2E2E]">
+      <div className="p-5">
         <Link href="/dashboard" className="text-xl font-extrabold tracking-tight text-white">
           AI-SDLC
         </Link>
@@ -41,7 +41,7 @@ export function Sidebar() {
         ))}
       </nav>
 
-      <div className="p-3 border-t border-[#2E2E2E]">
+      <div className="p-3 mt-2">
         <button
           onClick={() => signOut({ callbackUrl: "/" })}
           className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-[#999] hover:bg-[#2A2A2A] hover:text-white w-full transition-all duration-300"
