@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getSessionById, updateSession, deleteSession } from "@/lib/db/queries/sessions";
+import { updateSessionSchema } from "@/lib/validations";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
@@ -30,7 +31,11 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   }
 
   const body = await req.json();
-  const updated = await updateSession(id, body);
+  const parsed = updateSessionSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Invalid data" }, { status: 400 });
+  }
+  const updated = await updateSession(id, parsed.data);
   return NextResponse.json({ session: updated });
 }
 

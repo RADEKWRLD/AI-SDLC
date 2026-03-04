@@ -1,16 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { Header } from "@/components/layout/header";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { formatDistanceToNow } from "date-fns";
-import { zhCN } from "date-fns/locale";
+import { ProjectCard } from "@/components/dashboard/project-card";
 import type { Session } from "@/types";
 
 export default function DashboardPage() {
@@ -56,6 +53,24 @@ export default function DashboardPage() {
     completed: "已完成",
     archived: "已归档",
   };
+
+  async function handleEdit(id: string, data: { title: string; description: string }) {
+    const res = await fetch(`/api/sessions/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error("Failed to update");
+    setSessions((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, ...data } : s))
+    );
+  }
+
+  async function handleDelete(id: string) {
+    const res = await fetch(`/api/sessions/${id}`, { method: "DELETE" });
+    if (!res.ok) throw new Error("Failed to delete");
+    setSessions((prev) => prev.filter((s) => s.id !== id));
+  }
 
   return (
     <>
@@ -118,24 +133,13 @@ export default function DashboardPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {sessions.map((s) => (
-              <Link key={s.id} href={`/session/${s.id}`}>
-                <Card className="card-hover cursor-pointer h-full">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-base">{s.title}</CardTitle>
-                      <Badge variant="secondary">{statusLabel[s.status] || s.status}</Badge>
-                    </div>
-                    <CardDescription className="line-clamp-2">
-                      {s.description || "暂无描述"}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-xs text-[var(--muted-foreground)]">
-                      {formatDistanceToNow(new Date(s.createdAt), { addSuffix: true, locale: zhCN })}
-                    </p>
-                  </CardContent>
-                </Card>
-              </Link>
+              <ProjectCard
+                key={s.id}
+                session={s}
+                statusLabel={statusLabel}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+              />
             ))}
           </div>
         )}

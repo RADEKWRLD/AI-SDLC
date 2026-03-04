@@ -16,6 +16,12 @@ export const createSessionSchema = z.object({
   description: z.string().max(5000).optional(),
 });
 
+export const updateSessionSchema = z.object({
+  title: z.string().min(1, "标题不能为空").max(200).optional(),
+  description: z.string().max(5000).optional(),
+  status: z.enum(["active", "archived", "completed"]).optional(),
+});
+
 export const createDocumentSchema = z.object({
   type: z.enum(["mermaid", "api_spec", "arch_design", "dev_plan", "markdown"]),
   diagramType: z
