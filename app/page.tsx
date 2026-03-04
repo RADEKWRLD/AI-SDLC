@@ -20,19 +20,22 @@ const showcases = [
     tag: "多 Agent 并行",
     title: "五大 Agent 协同工作",
     desc: "Orchestrator 智能分析需求后，同时调度需求分析、架构设计、ER 建模、API 规范、计划制定五个专业 Agent 并行处理，实时流式返回进度。",
+    img: "/five-agents.png",
     imgAlt: "Agent 并行架构示意",
   },
   {
     tag: "实时渲染",
     title: "Mermaid 图表即时预览",
     desc: "架构图和 ER 图生成后立即渲染为可交互的矢量图形，支持缩放、平移和 SVG 导出，编辑代码后实时刷新预览。",
+    img: "/mermaid-display.png",
     imgAlt: "Mermaid 渲染预览截图",
   },
   {
-    tag: "版本演化",
-    title: "设计文档自动迭代",
-    desc: "每次需求变更自动生成新版本，保留完整版本历史，支持回溯对比。Append-only 设计确保任何修改都不会丢失。",
-    imgAlt: "版本历史对比截图",
+    tag: "模板库",
+    title: "快速搭建你的项目",
+    desc: "内置丰富的项目模板，覆盖 Web 应用、移动端、微服务等常见架构。选择模板一键生成完整设计文档，快速启动你的下一个项目。",
+    img: "/template.png",
+    imgAlt: "模板库截图",
   },
 ];
 
@@ -138,9 +141,9 @@ export default function HomePage() {
               AI-Powered Software Design
             </p>
             <h2 data-anim="headline" className="heading-display text-[var(--foreground)]">
-              智能软件生命周期
+              从需求到设计
               <br />
-              <span className="text-[var(--primary)]">自动化辅助系统</span>
+              <span className="text-[var(--primary)]">AI 一步到位</span>
             </h2>
             <p data-anim="desc" className="mt-8 text-lg md:text-xl text-[var(--muted-foreground)] max-w-2xl leading-relaxed font-light">
               输入自然语言需求，AI 自动生成架构图、ER 图、API 规范和发展计划。
@@ -153,11 +156,6 @@ export default function HomePage() {
               <Link href="/login" className="px-8 py-4 rounded-xl bg-[var(--secondary)] text-base font-semibold hover:bg-[var(--accent)] hover:text-[var(--primary)] transition-all duration-300">
                 已有账号
               </Link>
-            </div>
-            <div data-anim="cta" className="mt-8">
-              <a href="https://github.com/RADEKWRLD" target="_blank" rel="noopener noreferrer" className="text-sm font-bold text-[var(--foreground)] hover:text-[var(--primary)] transition-colors">
-                RADEKWRLD
-              </a>
             </div>
           </div>
         </div>
@@ -197,9 +195,8 @@ export default function HomePage() {
                 <h3 className="text-2xl md:text-3xl font-extrabold tracking-tight">{s.title}</h3>
                 <p className="mt-4 text-[var(--muted-foreground)] leading-relaxed">{s.desc}</p>
               </div>
-              {/* Image placeholder */}
-              <div data-anim="showcase-img" className="flex-1 w-full aspect-[16/10] rounded-2xl bg-[var(--secondary)] border border-[var(--accent)] flex items-center justify-center">
-                <span className="text-sm text-[var(--muted-foreground)]">{s.imgAlt}</span>
+              <div data-anim="showcase-img" className="flex-1 w-full">
+                <img src={s.img} alt={s.imgAlt} className="w-full rounded-2xl border border-[var(--accent)] shadow-lg" />
               </div>
             </div>
           ))}
