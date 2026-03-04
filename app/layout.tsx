@@ -17,6 +17,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "AI-SDLC - AI 驱动的软件设计自动化平台",
   description: "输入自然语言需求，AI 自动生成架构图、ER 图、API 规范和发展计划",
+  icons: {
+    icon: "/logo-solid.svg",
+  },
 };
 
 export default function RootLayout({

@@ -1,0 +1,14 @@
+<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Orange circle outline -->
+  <circle cx="24" cy="24" r="22" stroke="#FA5D29" stroke-width="2" fill="none"/>
+  <!-- Top arc -->
+  <path d="M17 15a11 11 0 0114 0" stroke="#FA5D29" stroke-width="3" stroke-linecap="round"/>
+  <!-- Bottom arc -->
+  <path d="M31 33a11 11 0 01-14 0" stroke="#FA5D29" stroke-width="3" stroke-linecap="round"/>
+  <!-- Top-right arrow -->
+  <path d="M32.5 16.5l-1.5-3.5-3.5 1.5" stroke="#FA5D29" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Bottom-left arrow -->
+  <path d="M15.5 31.5l1.5 3.5 3.5-1.5" stroke="#FA5D29" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Center dot -->
+  <circle cx="24" cy="24" r="2.5" fill="#FA5D29"/>
+</svg>
