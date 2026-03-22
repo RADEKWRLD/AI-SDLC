@@ -1,60 +1,58 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { CheckCircle, Route, Shield, Code, Terminal, ListChecks, Clock, Github, Mail } from "lucide-react";
 
 gsap.registerPlugin(ScrollTrigger);
 
-const features = [
-  { num: "01", title: "需求结构化", desc: "自然语言需求自动解析为结构化模块，AI 智能拆解功能点与约束条件" },
-  { num: "02", title: "架构图生成", desc: "自动生成 Mermaid 架构图，展示系统模块划分与依赖关系" },
-  { num: "03", title: "ER 图生成", desc: "从需求中识别数据实体与关联，自动生成 ER 关系图" },
-  { num: "04", title: "API 规范输出", desc: "基于架构设计自动生成 RESTful API 接口文档" },
-  { num: "05", title: "发展计划", desc: "AI 制定阶段性开发路线图，包含里程碑与风险评估" },
+const navLinks = [
+  { href: "#orchestrator", label: "多 Agent" },
+  { href: "#architecture", label: "架构设计" },
+  { href: "#er-diagrams", label: "ER 图" },
+  { href: "#templates", label: "模板库" },
+  { href: "#api-specs", label: "API 规范" },
+  { href: "#dev-plans", label: "开发计划" },
+  { href: "#tracking", label: "版本追踪" },
 ];
 
-const showcases = [
-  {
-    tag: "多 Agent 并行",
-    title: "五大 Agent 协同工作",
-    desc: "Orchestrator 智能分析需求后，同时调度需求分析、架构设计、ER 建模、API 规范、计划制定五个专业 Agent 并行处理，实时流式返回进度。",
-    img: "/five-agents.png",
-    imgAlt: "Agent 并行架构示意",
-  },
-  {
-    tag: "实时渲染",
-    title: "Mermaid 图表即时预览",
-    desc: "架构图和 ER 图生成后立即渲染为可交互的矢量图形，支持缩放、平移和 SVG 导出，编辑代码后实时刷新预览。",
-    img: "/mermaid-display.png",
-    imgAlt: "Mermaid 渲染预览截图",
-  },
-  {
-    tag: "模板库",
-    title: "快速搭建你的项目",
-    desc: "内置丰富的项目模板，覆盖 Web 应用、移动端、微服务等常见架构。选择模板一键生成完整设计文档，快速启动你的下一个项目。",
-    img: "/template.png",
-    imgAlt: "模板库截图",
-  },
+const architectureFeatures = [
+  "自动生成 Mermaid 系统架构图",
+  "模块依赖关系与数据流可视化",
+  "微服务 / 单体 / Serverless 架构适配",
+  "支持手动调整与交互式画布",
 ];
 
-const workflow = [
-  { step: "1", label: "输入需求", desc: "用自然语言描述你的系统需求" },
-  { step: "2", label: "AI 分析", desc: "Orchestrator 分析并分配 Agent" },
-  { step: "3", label: "并行生成", desc: "多个 Agent 同时处理不同产物" },
-  { step: "4", label: "实时预览", desc: "五类文档即时渲染到预览面板" },
-  { step: "5", label: "迭代演化", desc: "追加需求自动更新，版本持续演进" },
+const apiCards = [
+  { title: "接口映射", desc: "AI 从架构中自动提取所有 CRUD 和专用端点，生成完整的路由映射。", icon: Route, code: "GET /api/v1/projects/{id}" },
+  { title: "认证集成", desc: "自动识别需要认证的接口，生成 JWT、OAuth2 或 API Key 认证头文档。", icon: Shield, code: "security: - bearerAuth: []" },
+  { title: "SDK 生成", desc: "一键导出 TypeScript、Python 或 Go 客户端 SDK，直接从规范生成。", icon: Code, code: "npm install @generated/sdk" },
+];
+
+const devPlanFeatures = [
+  "自动生成项目开发周期文档",
+  "智能工作量分配与瓶颈检测",
 ];
 
 export default function HomePage() {
   const rootRef = useRef<HTMLDivElement>(null);
 
+  const handleNavClick = useCallback((e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    e.preventDefault();
+    const scroller = rootRef.current;
+    const target = scroller?.querySelector(href);
+    if (target && scroller) {
+      const top = (target as HTMLElement).offsetTop - 80;
+      scroller.scrollTo({ top, behavior: "smooth" });
+    }
+  }, []);
+
   useEffect(() => {
     const scroller = rootRef.current;
     if (!scroller) return;
 
-    // Set default scroller for all ScrollTriggers
     ScrollTrigger.defaults({ scroller });
 
     const ctx = gsap.context(() => {
@@ -66,30 +64,66 @@ export default function HomePage() {
         .from("[data-anim='desc']", { y: 30, opacity: 0, duration: 0.6 }, "-=0.3")
         .from("[data-anim='cta']", { y: 20, opacity: 0, duration: 0.5 }, "-=0.2");
 
-      // Feature cards — left to right reveal
-      gsap.from("[data-anim='feature']", {
-        scrollTrigger: { trigger: "[data-section='features']", start: "top 80%" },
-        x: -40, opacity: 0, duration: 0.5, stagger: 0.12, ease: "power2.out",
+      // Orchestrator section
+      gsap.from("[data-anim='orch-text']", {
+        scrollTrigger: { trigger: "#orchestrator", start: "top 80%" },
+        x: -60, opacity: 0, duration: 0.8, ease: "power2.out",
+      });
+      gsap.from("[data-anim='orch-img']", {
+        scrollTrigger: { trigger: "#orchestrator", start: "top 80%" },
+        x: 60, opacity: 0, duration: 0.8, ease: "power2.out",
       });
 
-      // Showcase sections - alternating slide
-      document.querySelectorAll("[data-anim='showcase']").forEach((el, i) => {
-        gsap.from(el, {
-          scrollTrigger: { trigger: el, start: "top 85%" },
-          x: i % 2 === 0 ? -60 : 60, opacity: 0, duration: 0.8, ease: "power2.out",
-        });
+      // Architecture section - 2 col slide
+      gsap.from("[data-anim='arch-img']", {
+        scrollTrigger: { trigger: "#architecture", start: "top 80%" },
+        x: -60, opacity: 0, duration: 0.8, ease: "power2.out",
+      });
+      gsap.from("[data-anim='arch-text']", {
+        scrollTrigger: { trigger: "#architecture", start: "top 80%" },
+        x: 60, opacity: 0, duration: 0.8, ease: "power2.out",
       });
 
-      // Showcase image placeholders
-      gsap.from("[data-anim='showcase-img']", {
-        scrollTrigger: { trigger: "[data-section='showcases']", start: "top 70%" },
-        scale: 0.9, opacity: 0, duration: 0.7, stagger: 0.2, ease: "back.out(1.4)",
+      // ER section
+      gsap.from("[data-anim='er-text']", {
+        scrollTrigger: { trigger: "#er-diagrams", start: "top 80%" },
+        x: -60, opacity: 0, duration: 0.8, ease: "power2.out",
+      });
+      gsap.from("[data-anim='er-img']", {
+        scrollTrigger: { trigger: "#er-diagrams", start: "top 80%" },
+        x: 60, opacity: 0, duration: 0.8, ease: "power2.out",
       });
 
-      // Workflow steps
-      gsap.from("[data-anim='step']", {
-        scrollTrigger: { trigger: "[data-section='workflow']", start: "top 80%" },
-        y: 30, opacity: 0, duration: 0.5, stagger: 0.1, ease: "power2.out",
+      // Templates
+      gsap.from("[data-anim='tpl-text']", {
+        scrollTrigger: { trigger: "#templates", start: "top 80%" },
+        y: 40, opacity: 0, duration: 0.7, ease: "power2.out",
+      });
+      gsap.from("[data-anim='tpl-img']", {
+        scrollTrigger: { trigger: "#templates", start: "top 80%" },
+        x: 60, opacity: 0, duration: 0.8, ease: "power2.out",
+      });
+
+      // API cards
+      gsap.from("[data-anim='api-card']", {
+        scrollTrigger: { trigger: "#api-specs", start: "top 80%" },
+        y: 30, opacity: 0, duration: 0.5, stagger: 0.15, ease: "power2.out",
+      });
+
+      // Dev plans
+      gsap.from("[data-anim='plan-chart']", {
+        scrollTrigger: { trigger: "#dev-plans", start: "top 80%" },
+        x: -60, opacity: 0, duration: 0.8, ease: "power2.out",
+      });
+      gsap.from("[data-anim='plan-text']", {
+        scrollTrigger: { trigger: "#dev-plans", start: "top 80%" },
+        x: 60, opacity: 0, duration: 0.8, ease: "power2.out",
+      });
+
+      // Tracking
+      gsap.from("[data-anim='tracking-card']", {
+        scrollTrigger: { trigger: "#tracking", start: "top 80%" },
+        scale: 0.95, opacity: 0, duration: 0.8, ease: "power3.out",
       });
 
       // Section titles
@@ -114,46 +148,63 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div ref={rootRef} className="flex flex-col bg-[var(--background)] overflow-y-auto h-screen">
-      {/* Navigation */}
-      <header className="sticky top-0 z-50 bg-[var(--background)]/80 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-6 lg:px-10 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-extrabold tracking-tight">CycleMind</h1>
+    <div ref={rootRef} className="flex flex-col bg-background overflow-y-auto h-screen">
+      {/* ===== Glass Nav ===== */}
+      <nav className="fixed top-0 w-full z-50 glass-nav shadow-ambient">
+        <div className="max-w-7xl mx-auto flex justify-between items-center px-6 lg:px-10 py-4">
+          <div className="text-2xl font-extrabold tracking-tighter text-primary">CycleMind</div>
+          <div className="hidden md:flex items-center gap-8">
+            {navLinks.map((link) => (
+              <a
+                key={link.href}
+                href={link.href}
+                onClick={(e) => handleNavClick(e, link.href)}
+                className="text-muted-foreground hover:text-primary transition-colors text-sm font-semibold"
+              >
+                {link.label}
+              </a>
+            ))}
+          </div>
           <div className="flex gap-3 items-center">
-            <Link href="/login" className="px-5 py-2.5 text-sm font-semibold rounded-lg bg-[var(--secondary)] hover:bg-[var(--accent)] hover:text-[var(--primary)] transition-all duration-300">
+            <Link href="/login" className="px-5 py-2.5 text-sm font-semibold rounded-full bg-secondary hover:bg-accent hover:text-primary transition-all duration-300">
               登录
             </Link>
-            <Link href="/register" className="px-5 py-2.5 text-sm font-semibold rounded-lg bg-[var(--primary)] text-white hover:brightness-110 transition-all duration-300 shadow-sm">
+            <Link href="/register" className="px-5 py-2.5 text-sm font-semibold rounded-full bg-primary text-white hover:brightness-110 transition-all duration-300 shadow-sm">
               开始使用
             </Link>
           </div>
         </div>
-      </header>
+      </nav>
 
       {/* ===== Hero ===== */}
-      <section className="relative z-10 min-h-[85vh] pt-20 pb-24 px-6 lg:px-10 overflow-hidden">
+      <section className="relative z-10 min-h-[calc(100vh-64px)] pt-28 pb-24 px-6 lg:px-10 overflow-hidden flex items-center">
+        {/* Spinning logo background */}
         <div className="absolute top-1/2 -right-[-10%] -translate-y-1/2 opacity-[0.15] pointer-events-none select-none">
-          <img src="/logo.svg" alt="" className="w-[500px] h-[500px] animate-[spin_20s_linear_infinite]" />
+          <img src="/logo.svg" alt="" className="w-125 h-125 animate-[spin_20s_linear_infinite]" />
         </div>
+        {/* Atoll decorative blurs */}
+        <div className="absolute -top-24 -right-24 w-96 h-96 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
+
         <div className="max-w-7xl mx-auto relative">
           <div className="max-w-3xl">
-            <p data-anim="tagline" className="text-sm font-semibold text-[var(--primary)] uppercase tracking-widest mb-6">
-              AI-Powered Software Design
-            </p>
-            <h2 data-anim="headline" className="heading-display text-[var(--foreground)]">
+            <span data-anim="tagline" className="inline-block bg-primary/10 text-primary px-4 py-1.5 rounded-full text-xs font-bold mb-6 tracking-widest uppercase">
+              AI 驱动的软件设计平台
+            </span>
+            <h2 data-anim="headline" className="heading-display text-foreground">
               从需求到设计
               <br />
-              <span className="text-[var(--primary)]">AI 一步到位</span>
+              <span className="text-primary">AI 一步到位</span>
             </h2>
-            <p data-anim="desc" className="mt-8 text-lg md:text-xl text-[var(--muted-foreground)] max-w-2xl leading-relaxed font-light">
+            <p data-anim="desc" className="mt-8 text-lg md:text-xl text-muted-foreground max-w-2xl leading-relaxed font-light">
               输入自然语言需求，AI 自动生成架构图、ER 图、API 规范和发展计划。
               五大 Agent 并行协作，SSE 实时推送，版本自动追踪。
             </p>
             <div data-anim="cta" className="mt-10 flex gap-4 items-center flex-wrap">
-              <Link href="/register" className="px-8 py-4 rounded-xl bg-[var(--primary)] text-white text-base font-bold hover:brightness-110 transition-all duration-300 shadow-lg shadow-[var(--primary)]/20">
+              <Link href="/register" className="px-8 py-4 rounded-full bg-primary text-white text-base font-bold hover:brightness-110 transition-all duration-300 shadow-lg shadow-primary/20">
                 免费开始 &rarr;
               </Link>
-              <Link href="/login" className="px-8 py-4 rounded-xl bg-[var(--secondary)] text-base font-semibold hover:bg-[var(--accent)] hover:text-[var(--primary)] transition-all duration-300">
+              <Link href="/login" className="px-8 py-4 rounded-full bg-secondary text-base font-semibold hover:bg-accent hover:text-primary transition-all duration-300">
                 已有账号
               </Link>
             </div>
@@ -161,100 +212,298 @@ export default function HomePage() {
         </div>
       </section>
 
-      <hr className="separator-editorial max-w-7xl mx-auto" />
+      {/* ===== Orchestrator ===== */}
+      <section id="orchestrator" className="py-32 px-6 lg:px-10 bg-surface-mid">
+        <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-16 items-center">
+          <div data-anim="orch-text">
+            <h2 data-anim="section-title" className="text-4xl font-extrabold tracking-tight mb-6">
+              多 Agent <span className="text-primary">并行协作</span>
+            </h2>
+            <p className="text-muted-foreground text-lg mb-8 leading-relaxed">
+              Orchestrator 智能分析你的需求，自动拆解任务并调度五大专业 Agent 并行运行。需求分析、架构设计、ER 建模、API 规范、计划制定同时进行，SSE 实时推送每个 Agent 的生成进度。
+            </p>
+            <ul className="space-y-4">
+              <li className="flex items-start gap-3">
+                <CheckCircle className="text-primary mt-0.5 shrink-0" size={20} />
+                <span className="font-medium">Orchestrator 智能需求分析与任务分配</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <CheckCircle className="text-primary mt-0.5 shrink-0" size={20} />
+                <span className="font-medium">五大 Sub-Agent 并行处理，效率倍增</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <CheckCircle className="text-primary mt-0.5 shrink-0" size={20} />
+                <span className="font-medium">SSE 实时流式推送生成进度</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <CheckCircle className="text-primary mt-0.5 shrink-0" size={20} />
+                <span className="font-medium">追加需求自动增量更新，版本持续演进</span>
+              </li>
+            </ul>
+          </div>
+          <div data-anim="orch-img">
+            <div className="bg-surface-lowest rounded-2xl p-8 shadow-ambient overflow-hidden relative">
+              <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-primary to-[#ff8c66]" />
+              <img className="w-full rounded-lg" src="/five-agents.png" alt="五大 Agent 并行架构示意" />
+            </div>
+          </div>
+        </div>
+      </section>
 
-      {/* ===== Features Grid (5 columns) ===== */}
-      <section data-section="features" className="relative z-0 py-24 px-6 lg:px-10">
+      {/* ===== Architecture ===== */}
+      <section id="architecture" className="py-32 px-6 lg:px-10 bg-background">
+        <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-16 items-center">
+          <div data-anim="arch-img" className="order-2 md:order-1">
+            <div className="bg-surface-lowest rounded-2xl p-8 shadow-ambient overflow-hidden relative">
+              <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-primary to-[#ff8c66]" />
+              <div className="flex items-center gap-2 mb-6 text-primary">
+                <Terminal size={18} />
+                <span className="font-bold text-sm tracking-widest uppercase">系统设计输出</span>
+              </div>
+              <img className="w-full rounded-xl" src="/mermaid-display.png" alt="多 Agent 系统架构示意" />
+            </div>
+          </div>
+          <div data-anim="arch-text" className="order-1 md:order-2">
+            <h2 data-anim="section-title" className="text-4xl font-extrabold tracking-tight mb-6">
+              系统架构<span className="text-primary">一键生成</span>
+            </h2>
+            <p className="text-muted-foreground text-lg mb-8 leading-relaxed">
+              AI 深入分析你的需求，自动输出模块划分、依赖关系和 Mermaid 架构图。支持微服务、单体、Serverless 等多种架构模式。
+            </p>
+            <ul className="space-y-4 mb-10">
+              {architectureFeatures.map((f, i) => (
+                <li key={i} className="flex items-start gap-3">
+                  <CheckCircle className="text-primary mt-0.5 shrink-0" size={20} />
+                  <span className="font-medium">{f}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      {/* ===== ER Diagrams ===== */}
+      <section id="er-diagrams" className="py-32 px-6 lg:px-10 bg-surface-mid">
+        <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-16 items-center">
+          <div data-anim="er-text" className="order-2 md:order-1">
+            <div className="bg-surface-lowest rounded-2xl p-8 shadow-ambient overflow-hidden relative">
+              <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-primary to-[#ff8c66]" />
+              <img className="w-full rounded-lg" src="/img-er.png" alt="ER 关系图预览" />
+            </div>
+          </div>
+          <div data-anim="er-img" className="order-1 md:order-2">
+            <h2 data-anim="section-title" className="text-4xl font-extrabold tracking-tight mb-6">
+              一键生成 <span className="text-primary">ER 图</span>
+            </h2>
+            <p className="text-muted-foreground text-lg mb-8 leading-relaxed">
+              从需求中自动识别数据实体、属性和关联关系，生成 Mermaid ER 关系图。清晰展示表结构与外键关系，助力数据库设计。
+            </p>
+            <ul className="space-y-4">
+              <li className="flex items-start gap-3">
+                <CheckCircle className="text-primary mt-0.5 shrink-0" size={20} />
+                <span className="font-medium">自动识别实体与关联关系</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <CheckCircle className="text-primary mt-0.5 shrink-0" size={20} />
+                <span className="font-medium">Mermaid 格式实时渲染</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <CheckCircle className="text-primary mt-0.5 shrink-0" size={20} />
+                <span className="font-medium">支持编辑代码后即时刷新预览</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      {/* ===== Templates ===== */}
+      <section id="templates" className="py-32 px-6 lg:px-10 bg-background">
+        <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-16 items-center">
+          <div data-anim="tpl-text">
+            <h2 data-anim="section-title" className="text-4xl font-extrabold tracking-tight mb-6">
+              五大模板库<span className="text-primary">让你快人一步</span>
+            </h2>
+            <p className="text-muted-foreground text-lg mb-8 leading-relaxed">
+              内置丰富的项目模板，覆盖 Web 应用、移动端、微服务等常见架构。选择模板一键生成完整设计文档，快速启动你的下一个项目。
+            </p>
+            <ul className="space-y-4">
+              <li className="flex items-start gap-3">
+                <CheckCircle className="text-primary mt-0.5 shrink-0" size={20} />
+                <span className="font-medium">覆盖主流技术栈与架构模式</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <CheckCircle className="text-primary mt-0.5 shrink-0" size={20} />
+                <span className="font-medium">一键生成完整设计文档</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <CheckCircle className="text-primary mt-0.5 shrink-0" size={20} />
+                <span className="font-medium">支持基于模板二次迭代</span>
+              </li>
+            </ul>
+          </div>
+          <div data-anim="tpl-img">
+            <div className="bg-surface-lowest rounded-2xl p-8 shadow-ambient overflow-hidden relative">
+              <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-primary to-[#ff8c66]" />
+              <img className="w-full rounded-lg" src="/template.png" alt="模板库截图" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ===== API Specs ===== */}
+      <section id="api-specs" className="py-32 px-6 lg:px-10 bg-surface-mid">
         <div className="max-w-7xl mx-auto">
           <div data-anim="section-title" className="text-center mb-16">
-            <p className="text-sm font-semibold text-[var(--primary)] uppercase tracking-widest mb-3">Core Features</p>
-            <h3 className="text-3xl md:text-4xl font-extrabold tracking-tight">五大核心能力</h3>
-            <p className="mt-4 text-[var(--muted-foreground)] max-w-xl mx-auto">从需求输入到设计产出，一键生成完整的软件设计文档</p>
+            <h2 className="text-4xl font-extrabold tracking-tight mb-4">
+              标准化 <span className="text-primary">API 规范</span>
+            </h2>
+            <p className="text-muted-foreground max-w-xl mx-auto">基于架构设计自动生成 Swagger/OpenAPI 3.0 接口文档</p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
-            {features.map((f) => (
-              <div key={f.num} data-anim="feature" className="group p-6 rounded-xl bg-[var(--card)] shadow-[0_1px_3px_rgba(0,0,0,0.06)] card-hover">
-                <span className="text-3xl font-extrabold text-[var(--primary)]/20 group-hover:text-[var(--primary)]/40 transition-all duration-300">{f.num}</span>
-                <h4 className="mt-3 text-lg font-bold tracking-tight">{f.title}</h4>
-                <p className="mt-2 text-sm text-[var(--muted-foreground)] leading-relaxed">{f.desc}</p>
+          <div className="grid md:grid-cols-3 gap-8">
+            {apiCards.map((card, i) => (
+              <div key={i} data-anim="api-card" className="p-8 bg-surface-lowest rounded-2xl shadow-ambient hover:shadow-2xl transition-all group card-hover">
+                <card.icon className="text-primary mb-4" size={28} />
+                <h3 className="text-xl font-bold mb-2">{card.title}</h3>
+                <p className="text-muted-foreground text-sm mb-6">{card.desc}</p>
+                <code className="block bg-surface-mid p-3 rounded-lg text-xs font-mono text-muted-foreground group-hover:text-primary transition-colors">
+                  {card.code}
+                </code>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      <hr className="separator-editorial max-w-7xl mx-auto" />
-
-      {/* ===== Showcases (alternating layout + image placeholders) ===== */}
-      <section data-section="showcases" className="py-24 px-6 lg:px-10">
-        <div className="max-w-7xl mx-auto space-y-32">
-          {showcases.map((s, i) => (
-            <div key={i} data-anim="showcase" className={`flex flex-col ${i % 2 === 0 ? "lg:flex-row" : "lg:flex-row-reverse"} items-center gap-12 lg:gap-20`}>
-              <div className="flex-1 max-w-lg">
-                <p className="text-xs font-semibold text-[var(--primary)] uppercase tracking-widest mb-3">{s.tag}</p>
-                <h3 className="text-2xl md:text-3xl font-extrabold tracking-tight">{s.title}</h3>
-                <p className="mt-4 text-[var(--muted-foreground)] leading-relaxed">{s.desc}</p>
-              </div>
-              <div data-anim="showcase-img" className="flex-1 w-full">
-                <img src={s.img} alt={s.imgAlt} className="w-full rounded-2xl border border-[var(--accent)] shadow-lg" />
+      {/* ===== Dev Plans ===== */}
+      <section id="dev-plans" className="py-32 px-6 lg:px-10 bg-background">
+        <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-16 items-center">
+          <div data-anim="plan-chart" className="bg-surface-lowest rounded-2xl p-8 shadow-ambient">
+            <div className="flex items-center justify-between mb-8">
+              <h4 className="font-bold text-lg">项目路线图: V1.0</h4>
+              <div className="flex gap-2">
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold">AI</div>
               </div>
             </div>
-          ))}
-        </div>
-      </section>
-
-      <hr className="separator-editorial max-w-7xl mx-auto" />
-
-      {/* ===== Workflow ===== */}
-      <section data-section="workflow" className="py-24 px-6 lg:px-10">
-        <div className="max-w-7xl mx-auto">
-          <div data-anim="section-title" className="text-center mb-16">
-            <p className="text-sm font-semibold text-[var(--primary)] uppercase tracking-widest mb-3">How It Works</p>
-            <h3 className="text-3xl md:text-4xl font-extrabold tracking-tight">五步完成软件设计</h3>
-          </div>
-          <div className="flex flex-col md:flex-row items-start gap-6">
-            {workflow.map((w, i) => (
-              <div key={i} data-anim="step" className="flex-1 relative">
-                <div className="flex items-center gap-4 mb-3">
-                  <div className="w-10 h-10 rounded-full bg-[var(--primary)] text-white flex items-center justify-center text-sm font-bold shrink-0">
-                    {w.step}
-                  </div>
-                  {i < workflow.length - 1 && <div className="hidden md:block flex-1 h-px bg-[var(--primary)]/20" />}
-                </div>
-                <h4 className="font-bold text-base">{w.label}</h4>
-                <p className="mt-1 text-sm text-[var(--muted-foreground)]">{w.desc}</p>
+            <div className="space-y-6">
+              <div className="relative h-8 w-full bg-surface-mid rounded-full">
+                <div className="absolute left-0 top-0 h-full w-1/3 bg-primary rounded-full" />
+                <span className="absolute -top-6 left-0 text-[10px] font-bold text-muted-foreground">第 1 周：需求分析</span>
               </div>
-            ))}
+              <div className="relative h-8 w-full bg-surface-mid rounded-full">
+                <div className="absolute left-[33%] top-0 h-full w-[50%] bg-[#ff8c66] rounded-full" />
+                <span className="absolute -top-6 left-[33%] text-[10px] font-bold text-muted-foreground">第 2-3 周：核心开发</span>
+              </div>
+              <div className="relative h-8 w-full bg-surface-mid rounded-full">
+                <div className="absolute left-[70%] top-0 h-full w-[20%] bg-muted-foreground/30 rounded-full" />
+                <span className="absolute -top-6 left-[70%] text-[10px] font-bold text-muted-foreground">第 4 周：测试</span>
+              </div>
+            </div>
+          </div>
+          <div data-anim="plan-text">
+            <h2 data-anim="section-title" className="text-4xl font-extrabold tracking-tight mb-6">
+              Sprint 级 <span className="text-primary">开发计划</span>
+            </h2>
+            <p className="text-muted-foreground text-lg mb-8 leading-relaxed">
+              Dev Plan Agent 将架构决策拆解为可执行的任务列表。自动估算复杂度、推荐依赖关系，并生成合理的开发时间线。
+            </p>
+            <div className="space-y-4">
+              {devPlanFeatures.map((f, i) => (
+                <div key={i} className="flex items-center gap-4 p-4 rounded-xl bg-surface-mid hover:bg-surface-lowest hover:shadow-ambient transition-all cursor-default group">
+                  <ListChecks className="text-muted-foreground group-hover:text-primary transition-colors" size={20} />
+                  <span className="font-medium">{f}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
-      <hr className="separator-editorial max-w-7xl mx-auto" />
+      {/* ===== Version Tracking ===== */}
+      <section id="tracking" className="py-32 px-6 lg:px-10 bg-surface-mid">
+        <div className="max-w-5xl mx-auto text-center">
+          <div className="inline-flex items-center gap-2 bg-surface-lowest px-4 py-2 rounded-full mb-8 shadow-sm">
+            <Clock className="text-primary" size={14} />
+            <span className="text-xs font-bold uppercase tracking-widest">版本追踪</span>
+          </div>
+          <h2 data-anim="section-title" className="text-4xl font-extrabold tracking-tight mb-6">
+            每次迭代<span className="text-primary">自动记录</span>
+          </h2>
+          <p className="text-muted-foreground text-lg mb-12 max-w-2xl mx-auto">
+            追加需求时自动对比差异，生成变更日志。版本持续演进，完整追踪设计历史。
+          </p>
+          <div data-anim="tracking-card" className="bg-surface-lowest rounded-2xl p-8 shadow-ambient text-left">
+            <div className="flex items-center gap-4 mb-8">
+              <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white">
+                <Terminal size={20} />
+              </div>
+              <div>
+                <div className="font-bold text-lg">Release v2.4.0</div>
+                <div className="text-xs text-muted-foreground">由 CycleMind AI 生成 · 2 分钟前</div>
+              </div>
+            </div>
+            <div className="grid md:grid-cols-2 gap-8">
+              <div>
+                <h5 className="font-bold text-sm mb-4 uppercase tracking-tight text-muted-foreground">架构图更新</h5>
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="w-2 h-2 rounded-full bg-green-500 shrink-0" />
+                  <span className="text-sm font-medium">负载均衡器升级为网络 LB</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0" />
+                  <span className="text-sm font-medium">新增 RDS 只读副本到架构</span>
+                </div>
+              </div>
+              <div>
+                <h5 className="font-bold text-sm mb-4 uppercase tracking-tight text-muted-foreground">Schema 变更</h5>
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="w-2 h-2 rounded-full bg-yellow-500 shrink-0" />
+                  <span className="text-sm font-medium">User 表新增 last_login 字段</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="w-2 h-2 rounded-full bg-red-500 shrink-0" />
+                  <span className="text-sm font-medium">Orders 表废弃 legacy_id 字段</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* ===== CTA Banner ===== */}
-      <section data-section="cta-banner" className="py-24 px-6 lg:px-10">
-        <div data-anim="cta-banner" className="max-w-4xl mx-auto text-center bg-[var(--primary)] rounded-3xl px-8 py-16 relative overflow-hidden">
+      <section data-section="cta-banner" className="py-24 px-6 lg:px-10 bg-primary">
+        <div data-anim="cta-banner" className="max-w-4xl mx-auto text-center relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/3 pointer-events-none" />
           <div className="relative z-10">
-            <h3 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight">开始用 AI 设计你的下一个项目</h3>
-            <p className="mt-4 text-white/70 max-w-lg mx-auto">无需手动绘图，无需编写模板。输入需求，CycleMind 帮你生成一切。</p>
+            <h3 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight">
+              开始用 AI 设计你的<br />下一个项目
+            </h3>
+            <p className="mt-4 text-white/70 max-w-lg mx-auto font-medium">无需手动绘图，无需编写模板。输入需求，CycleMind 帮你生成一切。</p>
             <div className="mt-8">
-              <Link href="/register" className="px-8 py-4 rounded-xl bg-white text-[var(--primary)] text-base font-bold hover:bg-white/90 transition-all duration-300 shadow-lg shadow-black/10">
+              <Link href="/register" className="px-10 py-5 rounded-full bg-white text-primary text-lg font-extrabold hover:shadow-2xl hover:scale-105 transition-all duration-300">
                 免费注册 &rarr;
               </Link>
             </div>
+            <p className="mt-6 text-white/60 font-medium text-sm">无需信用卡，2 分钟即可启动。</p>
           </div>
         </div>
       </section>
 
       {/* ===== Footer ===== */}
-      <footer className="py-10 px-6 bg-[var(--secondary)]">
-        <div className="max-w-7xl mx-auto flex flex-col items-center gap-4">
-          <a href="https://github.com/RADEKWRLD" target="_blank" rel="noopener noreferrer" className="text-sm font-bold text-[var(--primary)] hover:brightness-110 transition-all">
-            RADEKWRLD
-          </a>
-          <span className="text-xs text-[var(--muted-foreground)]">&copy; 2026 CycleMind - AI-Powered Software Design</span>
+      <footer className="py-12 px-6 lg:px-10 bg-surface-lowest">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
+          <div className="flex flex-col items-center md:items-start gap-2">
+            <div className="font-bold text-primary text-xl">CycleMind</div>
+            <p className="text-muted-foreground text-sm">© 2026 CycleMind · AI 驱动的软件设计平台</p>
+          </div>
+          <div className="flex gap-4">
+            <a className="w-10 h-10 rounded-full bg-surface-mid flex items-center justify-center text-muted-foreground hover:text-primary transition-all" href="https://github.com/RADEKWRLD" target="_blank" rel="noopener noreferrer">
+              <Github size={18} />
+            </a>
+            <a className="w-10 h-10 rounded-full bg-surface-mid flex items-center justify-center text-muted-foreground hover:text-primary transition-all" href="#">
+              <Mail size={18} />
+            </a>
+          </div>
         </div>
       </footer>
     </div>

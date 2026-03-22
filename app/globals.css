@@ -38,6 +38,9 @@
   --sidebar-accent-foreground: #1A1A1A;
   --sidebar-border: #E8E0D8;
   --sidebar-ring: #FA5D29;
+  --surface-lowest: #FFFFFF;
+  --surface-mid: #FAF9F9;
+  --surface-high: #F0EFEE;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -74,6 +77,9 @@
     --sidebar-accent-foreground: #EDEDED;
     --sidebar-border: #2E2E2E;
     --sidebar-ring: #FA5D29;
+    --surface-lowest: #0A0A0A;
+    --surface-mid: #141414;
+    --surface-high: #1E1E1E;
   }
 }
 
@@ -112,6 +118,9 @@
   --color-chart-1: var(--chart-1);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
+  --color-surface-lowest: var(--surface-lowest);
+  --color-surface-mid: var(--surface-mid);
+  --color-surface-high: var(--surface-high);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -358,6 +367,37 @@ a, button, [role="button"], input, textarea, select {
   --sidebar-accent-foreground: #EDEDED;
   --sidebar-border: #2E2E2E;
   --sidebar-ring: #FA5D29;
+  --surface-lowest: #0A0A0A;
+  --surface-mid: #141414;
+  --surface-high: #1E1E1E;
+}
+
+/* Glassmorphism nav */
+.glass-nav {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+.dark .glass-nav {
+  background: rgba(10, 10, 10, 0.8);
+}
+@media (prefers-color-scheme: dark) {
+  .glass-nav {
+    background: rgba(10, 10, 10, 0.8);
+  }
+}
+
+/* Ambient shadow */
+.shadow-ambient {
+  box-shadow: 0px 20px 40px rgba(0, 0, 0, 0.06);
+}
+.dark .shadow-ambient {
+  box-shadow: 0px 20px 40px rgba(0, 0, 0, 0.3);
+}
+@media (prefers-color-scheme: dark) {
+  .shadow-ambient {
+    box-shadow: 0px 20px 40px rgba(0, 0, 0, 0.3);
+  }
 }
 
 @layer base {
