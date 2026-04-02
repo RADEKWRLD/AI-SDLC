@@ -1,0 +1,45 @@
+<p>传统的 API 设计需要开发者手动梳理业务逻辑、定义端点和编写文档。CycleMind 的 API Agent 颠覆了这一流程——只需用自然语言描述你的系统，AI 就能自动生成完整的 RESTful API 规范。</p>
+
+<h2>API Agent 处理管线</h2>
+<p>API Agent 的工作分为四个阶段，每个阶段都经过精心设计以确保输出质量：</p>
+<ol>
+<li><strong>架构解析</strong> —— 接收 Design Agent 输出的系统架构图，提取所有服务组件和数据实体</li>
+<li><strong>端点推导</strong> —— 基于实体和业务操作，自动推导 CRUD 端点及其 HTTP 方法</li>
+<li><strong>Schema 推断</strong> —— 根据 ER 图和业务语义，生成请求体和响应体的 JSON Schema</li>
+<li><strong>文档输出</strong> —— 将所有端点整合为 OpenAPI 3.0 规范文档</li>
+</ol>
+
+<h2>从架构中提取 CRUD 端点</h2>
+<p>API Agent 会分析系统架构中的每个数据实体，自动生成标准的 CRUD 操作端点。例如，对于"订单"实体，系统会自动生成：</p>
+<ul>
+<li><strong>POST /api/orders</strong> —— 创建新订单</li>
+<li><strong>GET /api/orders</strong> —— 获取订单列表（支持分页和筛选）</li>
+<li><strong>GET /api/orders/:id</strong> —— 获取单个订单详情</li>
+<li><strong>PUT /api/orders/:id</strong> —— 更新订单信息</li>
+<li><strong>DELETE /api/orders/:id</strong> —— 删除订单</li>
+</ul>
+<p>除了基础 CRUD，AI 还能识别业务特定操作，如"取消订单""确认支付"等，生成对应的自定义端点。</p>
+
+<h3>URL 命名与版本管理</h3>
+<p>所有端点遵循 RESTful 命名规范，资源名使用复数形式。系统默认添加版本前缀 /api/v1/，并支持配置多版本共存策略。</p>
+
+<blockquote><p>好的 API 设计应当是自文档化的——仅通过 URL 和 HTTP 方法，开发者就能猜到端点的用途。</p></blockquote>
+
+<h2>认证头自动生成</h2>
+<p>API Agent 会根据系统的安全需求，自动为端点配置认证方案：</p>
+<ul>
+<li><strong>Bearer Token</strong> —— 基于 JWT 的无状态认证，适合大多数 API 场景</li>
+<li><strong>API Key</strong> —— 适合第三方集成和服务间调用</li>
+<li><strong>OAuth 2.0</strong> —— 适合需要细粒度授权的复杂系统</li>
+</ul>
+<p>每个端点会被标注所需的权限级别，公开端点、用户端点和管理端点会自动分配不同的认证策略。</p>
+
+<h2>请求与响应 Schema 推断</h2>
+<p>Schema 推断是 API Agent 最具技术含量的环节。AI 会综合分析数据库实体的字段类型、业务约束和前端展示需求，生成精确的 JSON Schema。</p>
+<h3>智能字段过滤</h3>
+<p>创建接口和更新接口会自动排除系统生成字段（如 id、created_at）。列表接口会省略大文本字段以优化传输效率。详情接口则返回完整数据。</p>
+<h3>校验规则推断</h3>
+<p>AI 能从字段语义推断校验规则，例如 email 字段自动添加格式校验，price 字段添加最小值约束，username 字段添加长度限制和字符集规则。</p>
+
+<h2>总结</h2>
+<p>CycleMind 的 API Agent 将自然语言到 API 规范的转化变为一个端到端的自动化流程。开发团队可以将更多精力投入到业务逻辑的实现中，而不是花费大量时间在接口设计和文档编写上。</p>

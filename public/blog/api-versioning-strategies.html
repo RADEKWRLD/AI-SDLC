@@ -1,0 +1,58 @@
+<p>API 一旦发布，就有了消费者。如何在不破坏现有客户端的前提下演进 API，是每个后端团队都必须面对的问题。本文将深入对比三种主流的 API 版本策略。</p>
+
+<h2>为什么需要 API 版本控制</h2>
+<p>当 API 需要进行破坏性变更时（删除字段、修改数据结构、更改业务规则），如果没有版本控制，所有客户端会同时受到影响。版本控制让新旧 API 共存，给客户端充足的迁移时间。</p>
+
+<h2>URL 路径版本（Path Versioning）</h2>
+<p>这是最常见也最直观的方式，将版本号嵌入 URL 路径中。</p>
+<ul>
+<li><strong>格式</strong> —— <code>/api/v1/users</code>、<code>/api/v2/users</code></li>
+<li><strong>优点</strong> —— 直观、易于理解、便于测试和调试</li>
+<li><strong>缺点</strong> —— URL 不够"纯净"，版本号并非资源的一部分</li>
+<li><strong>适用场景</strong> —— 面向外部开发者的公开 API</li>
+</ul>
+
+<h2>请求头版本（Header Versioning）</h2>
+<p>通过自定义请求头来指定 API 版本，保持 URL 的简洁。</p>
+<ul>
+<li><strong>格式</strong> —— <code>Accept: application/vnd.cyclemind.v2+json</code></li>
+<li><strong>优点</strong> —— URL 保持整洁，符合 REST 纯粹主义</li>
+<li><strong>缺点</strong> —— 不够直观，浏览器直接访问不方便，文档编写复杂</li>
+<li><strong>适用场景</strong> —— 内部微服务间通信</li>
+</ul>
+
+<h2>查询参数版本（Query Param Versioning）</h2>
+<p>通过查询参数传递版本号，是一种折中方案。</p>
+<ul>
+<li><strong>格式</strong> —— <code>/api/users?version=2</code></li>
+<li><strong>优点</strong> —— 实现简单，可以设置默认版本</li>
+<li><strong>缺点</strong> —— 容易被忽略，缓存策略复杂</li>
+<li><strong>适用场景</strong> —— 快速迭代的内部项目</li>
+</ul>
+
+<h2>三种策略对比</h2>
+<p>没有绝对最优的方案，选择取决于你的具体场景。</p>
+<blockquote><p>对于大多数团队，URL 路径版本是最安全的选择——简单、明确、不容易出错。</p></blockquote>
+<p>在 CycleMind 生成的 API 设计文档中，默认采用 URL 路径版本策略，但你可以通过配置切换到其他方案。</p>
+
+<h2>版本迁移指南</h2>
+<p>发布新版本 API 时，必须为客户端提供清晰的迁移指南。</p>
+<ol>
+<li>提前公告 —— 至少提前两个迭代周期通知</li>
+<li>提供迁移文档 —— 详细列出所有破坏性变更</li>
+<li>并行运行 —— 新旧版本至少并行运行 3-6 个月</li>
+<li>监控旧版本流量 —— 确认所有客户端已迁移后再下线</li>
+<li>设置日落日期 —— 明确旧版本的停止服务日期</li>
+</ol>
+
+<h2>向后兼容性</h2>
+<p>并非所有变更都需要新版本。以下类型的变更是向后兼容的：</p>
+<ul>
+<li><strong>新增可选字段</strong> —— 不影响现有客户端</li>
+<li><strong>新增端点</strong> —— 现有端点不受影响</li>
+<li><strong>新增枚举值</strong> —— 客户端应设计为能容忍未知值</li>
+</ul>
+<p>需要新版本的变更包括：删除字段、修改字段类型、更改必填/选填属性、修改业务语义等。</p>
+
+<h2>总结</h2>
+<p>API 版本控制是 API 生命周期管理的关键环节。选择合适的策略、制定清晰的迁移计划、保持向后兼容性，这些都是构建可信赖 API 的基础。CycleMind 在生成 API 设计文档时会自动考虑版本策略，帮助你从第一天就做好准备。</p>

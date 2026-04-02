@@ -178,6 +178,12 @@ export default function HomePage() {
                 {link.label}
               </a>
             ))}
+            <Link
+              href="/blog"
+              className="text-muted-foreground hover:text-primary transition-colors text-sm font-medium"
+            >
+              Blog
+            </Link>
           </div>
           <div className="flex gap-3 items-center">
             <Link href="/login" className="px-5 py-2.5 text-sm font-medium rounded-full bg-secondary hover:bg-accent hover:text-primary transition-all duration-300 btn-press focus-anthropic">

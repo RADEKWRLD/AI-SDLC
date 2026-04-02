@@ -1,0 +1,65 @@
+<p>Mermaid 是一种基于文本的图表描述语言，让开发者能够用代码的方式创建专业的技术图表。CycleMind 深度集成了 Mermaid，将其作为所有可视化输出的核心渲染引擎。本文将深入解析 Mermaid 的各类图表及其在 CycleMind 中的应用。</p>
+
+<h2>流程图（Flowchart）</h2>
+<p>流程图是 Mermaid 中最基础也最常用的图表类型，用于描述业务流程和系统逻辑。</p>
+<ul>
+<li><strong>节点类型</strong> —— 矩形表示处理步骤，菱形表示判断条件，圆角矩形表示起止节点</li>
+<li><strong>连线样式</strong> —— 实线箭头表示常规流转，虚线箭头表示可选路径</li>
+<li><strong>子图分组</strong> —— 使用 subgraph 语法将相关节点组织在一起</li>
+</ul>
+<p>在 CycleMind 中，Design Agent 生成的系统架构图主要采用流程图形式，清晰展示组件间的调用关系。</p>
+
+<h2>序列图（Sequence Diagram）</h2>
+<p>序列图擅长表现多个参与者之间的交互时序，是 API 调用链和微服务通信的最佳可视化方式。</p>
+<h3>核心语法元素</h3>
+<ul>
+<li><strong>参与者声明</strong> —— 使用 participant 关键字定义交互方</li>
+<li><strong>同步消息</strong> —— 实线箭头表示请求，虚线箭头表示响应</li>
+<li><strong>异步消息</strong> —— 开放箭头表示不等待返回的消息</li>
+<li><strong>激活框</strong> —— 表示参与者正在处理请求的时间段</li>
+</ul>
+<p>CycleMind 的 API Agent 会为每个复杂接口自动生成序列图，展示请求从客户端到数据库的完整链路。</p>
+
+<blockquote><p>序列图的价值在于让时间维度可见——它回答了"什么先发生、什么后发生"这个架构设计中最关键的问题。</p></blockquote>
+
+<h2>类图（Class Diagram）</h2>
+<p>类图用于描述系统中的数据结构及其关系，在 CycleMind 中主要用于展示数据库实体模型。</p>
+<ul>
+<li><strong>类定义</strong> —— 包含类名、属性列表和方法列表三个区域</li>
+<li><strong>关系类型</strong> —— 继承、组合、聚合和关联四种关系用不同的线型表示</li>
+<li><strong>基数标注</strong> —— 在关系线两端标注 1、*、0..1 等基数</li>
+</ul>
+<p>ER Agent 生成的实体关系图就是基于 Mermaid 类图语法构建的。</p>
+
+<h2>状态图（State Diagram）</h2>
+<p>状态图描述对象在其生命周期中的状态变迁，适合表达订单状态流转、审批流程等业务逻辑。</p>
+<ol>
+<li><strong>状态节点</strong> —— 使用方括号定义状态名称和描述</li>
+<li><strong>转换条件</strong> —— 在箭头上标注触发状态变迁的事件或条件</li>
+<li><strong>复合状态</strong> —— 支持状态嵌套，表达更复杂的状态机</li>
+<li><strong>起止标记</strong> —— 用特殊符号标记初始状态和终止状态</li>
+</ol>
+
+<h2>样式与主题配置</h2>
+<p>Mermaid 提供了丰富的样式定制能力：</p>
+<ul>
+<li><strong>内置主题</strong> —— default、dark、forest、neutral 四种预设主题</li>
+<li><strong>节点样式</strong> —— 通过 style 指令自定义颜色、边框和字体</li>
+<li><strong>类选择器</strong> —— 使用 classDef 批量定义样式类并应用到多个节点</li>
+</ul>
+<p>CycleMind 默认使用 neutral 主题，并根据当前页面的明暗模式自动切换配色方案。</p>
+
+<h3>响应式渲染</h3>
+<p>CycleMind 中的 Mermaid 组件采用客户端动态导入的方式加载，通过 useEffect 监听容器尺寸变化，确保图表在不同屏幕尺寸下都能正确显示。</p>
+
+<h2>CycleMind 集成方式</h2>
+<p>在 CycleMind 的技术实现中，Mermaid 的集成遵循以下架构：</p>
+<ol>
+<li><strong>AI 生成</strong> —— 各 Agent 输出标准的 Mermaid 语法字符串</li>
+<li><strong>语法校验</strong> —— 前端组件在渲染前进行语法合法性检查</li>
+<li><strong>客户端渲染</strong> —— 使用 dynamic import 避免服务端渲染兼容问题</li>
+<li><strong>交互增强</strong> —— 支持缩放、拖拽和节点点击事件</li>
+</ol>
+
+<h2>总结</h2>
+<p>Mermaid 以其简洁的语法和丰富的图表类型，成为 CycleMind 可视化层的理想选择。通过 AI 自动生成和客户端智能渲染的结合，CycleMind 让技术图表的创建和维护变得前所未有的轻松。</p>

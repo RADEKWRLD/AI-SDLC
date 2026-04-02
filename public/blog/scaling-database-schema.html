@@ -1,0 +1,58 @@
+<p>数据库 Schema 不是一成不变的。随着业务增长，表结构需要不断演进。如何安全、高效地进行 Schema 变更，同时保证零停机，是每个工程团队的核心挑战。</p>
+
+<h2>Schema 演进的挑战</h2>
+<p>数据库变更不同于代码变更——代码可以瞬间部署，但数据库迁移可能涉及数百万行数据的重组。</p>
+<ul>
+<li><strong>数据安全</strong> —— 一次错误的迁移可能导致数据丢失</li>
+<li><strong>服务可用性</strong> —— 长时间的表锁会导致服务中断</li>
+<li><strong>回滚困难</strong> —— 数据迁移后的回滚远比代码回滚复杂</li>
+<li><strong>多环境一致性</strong> —— 开发、测试、生产环境的 Schema 必须同步</li>
+</ul>
+
+<h2>迁移策略</h2>
+<p>CycleMind 使用 Drizzle ORM 管理数据库迁移，支持声明式 Schema 定义和自动化迁移脚本生成。</p>
+
+<h3>增量迁移（Incremental Migration）</h3>
+<p>每次变更生成一个独立的迁移文件，按序执行。这是最常见的策略，适合大多数场景。</p>
+<ol>
+<li>修改 Schema 定义文件</li>
+<li>运行 <code>pnpm db:generate</code> 生成迁移脚本</li>
+<li>审阅生成的 SQL 语句</li>
+<li>运行 <code>pnpm db:push</code> 应用到数据库</li>
+</ol>
+
+<h3>向后兼容变更</h3>
+<p>优先选择向后兼容的变更方式，这样即使应用回滚，数据库也无需回滚。</p>
+<ul>
+<li><strong>新增列</strong> —— 设置默认值或允许 NULL</li>
+<li><strong>新增表</strong> —— 不影响现有表</li>
+<li><strong>新增索引</strong> —— 使用 CONCURRENTLY 避免锁表</li>
+</ul>
+
+<h2>AI 生成迁移脚本</h2>
+<p>CycleMind 的 ER Agent 不仅设计数据模型，还能生成对应的迁移脚本。当你修改 ER 图时，AI 会自动计算差异并生成安全的迁移 SQL。</p>
+<blockquote><p>AI 生成的迁移脚本会自动考虑数据保全、索引重建、约束检查等细节，但人工审阅仍然是必要的。</p></blockquote>
+
+<h2>零停机迁移</h2>
+<p>对于生产环境，零停机迁移是刚需。以下是常用的技术：</p>
+<ul>
+<li><strong>扩展-收缩模式</strong> —— 先添加新结构，迁移数据，再移除旧结构</li>
+<li><strong>双写策略</strong> —— 迁移期间同时写入新旧结构</li>
+<li><strong>影子表</strong> —— 在后台创建新表结构，数据同步完成后切换</li>
+<li><strong>在线 DDL 工具</strong> —— 如 pt-online-schema-change 或 gh-ost</li>
+</ul>
+
+<h2>Schema 版本管理</h2>
+<p>每个迁移文件都应有唯一的版本标识和时间戳。CycleMind 的 append-only 设计理念同样适用于数据库迁移——迁移只能向前，不能修改已执行的迁移文件。</p>
+<p>建议的版本命名格式：<code>0001_create_users_table.sql</code>、<code>0002_add_email_index.sql</code>，数字序号确保执行顺序，描述性后缀便于理解。</p>
+
+<h2>常见陷阱</h2>
+<ul>
+<li><strong>避免大事务</strong> —— 将大迁移拆分为多个小步骤</li>
+<li><strong>避免锁表操作</strong> —— 在业务低峰期执行或使用在线工具</li>
+<li><strong>务必备份</strong> —— 任何生产迁移前都要做完整备份</li>
+<li><strong>测试迁移</strong> —— 在与生产同构的环境中预先测试</li>
+</ul>
+
+<h2>总结</h2>
+<p>数据库 Schema 演进是一门需要谨慎对待的工程实践。CycleMind 通过 AI 辅助生成迁移脚本和一致性校验，让这个过程更加安全可控。但请记住，任何自动化工具都不能替代工程师的审慎判断。</p>

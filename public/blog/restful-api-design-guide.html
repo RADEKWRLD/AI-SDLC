@@ -1,0 +1,53 @@
+<p>RESTful API 是现代 Web 应用的基石。一套优秀的 API 设计规范不仅能提升开发效率，更能让前后端协作如丝般顺滑。本文将从 URL 命名到错误处理，系统性地梳理 RESTful API 设计的核心原则。</p>
+
+<h2>URL 命名规范</h2>
+<p>资源命名是 API 设计的第一步，也是最容易被忽视的一步。</p>
+<ul>
+<li><strong>使用名词复数</strong> —— <code>/users</code>、<code>/projects</code>，而非 <code>/getUser</code></li>
+<li><strong>层级关系用嵌套表达</strong> —— <code>/projects/42/documents</code> 表示项目下的文档</li>
+<li><strong>避免动词</strong> —— 动作由 HTTP 方法承载，URL 只描述资源</li>
+<li><strong>使用 kebab-case</strong> —— <code>/design-documents</code> 而非 <code>/designDocuments</code></li>
+</ul>
+
+<h2>HTTP 方法语义</h2>
+<p>每个 HTTP 方法都有明确的语义约定，不应混淆使用。</p>
+<ul>
+<li><strong>GET</strong> —— 读取资源，必须是幂等且安全的</li>
+<li><strong>POST</strong> —— 创建资源，返回 201 Created</li>
+<li><strong>PUT</strong> —— 全量替换资源，幂等操作</li>
+<li><strong>PATCH</strong> —— 部分更新资源</li>
+<li><strong>DELETE</strong> —— 删除资源，返回 204 No Content</li>
+</ul>
+
+<h2>状态码的正确使用</h2>
+<p>状态码是 API 与调用方之间的"语言"，精准的状态码能减少大量沟通成本。</p>
+<ul>
+<li><strong>200 OK</strong> —— 请求成功</li>
+<li><strong>201 Created</strong> —— 资源创建成功</li>
+<li><strong>400 Bad Request</strong> —— 请求参数有误</li>
+<li><strong>401 Unauthorized</strong> —— 未认证</li>
+<li><strong>403 Forbidden</strong> —— 无权限</li>
+<li><strong>404 Not Found</strong> —— 资源不存在</li>
+<li><strong>422 Unprocessable Entity</strong> —— 参数格式正确但语义有误</li>
+<li><strong>500 Internal Server Error</strong> —— 服务器内部错误</li>
+</ul>
+
+<h2>分页与过滤</h2>
+<p>当资源集合较大时，分页是必须的。CycleMind 生成的 API 设计文档会自动包含分页方案。</p>
+<ul>
+<li><strong>偏移分页</strong> —— <code>?page=2&amp;limit=20</code>，简单直观但大数据量性能差</li>
+<li><strong>游标分页</strong> —— <code>?cursor=abc123&amp;limit=20</code>，适合实时数据流</li>
+<li><strong>过滤参数</strong> —— <code>?status=active&amp;sort=-created_at</code></li>
+</ul>
+
+<h2>错误处理</h2>
+<p>统一的错误响应格式能极大简化客户端的错误处理逻辑。</p>
+<blockquote><p>好的错误信息应该告诉开发者：发生了什么、为什么发生、以及如何修复。</p></blockquote>
+<p>建议的错误响应结构包含 <code>code</code>（机器可读错误码）、<code>message</code>（人类可读描述）和 <code>details</code>（字段级错误详情）。</p>
+
+<h2>HATEOAS 与内容协商</h2>
+<p>HATEOAS（超媒体作为应用状态引擎）让 API 具备自描述能力，客户端可以通过返回的链接发现可用操作。</p>
+<p>内容协商通过 <code>Accept</code> 和 <code>Content-Type</code> 头实现，允许同一端点返回 JSON、XML 等不同格式。在实践中，大多数现代 API 默认使用 JSON，但保留内容协商能力是良好的设计习惯。</p>
+
+<h2>总结</h2>
+<p>RESTful API 设计没有绝对的"标准答案"，但遵循这些原则能让你的 API 更加一致、可预测、易于使用。在 CycleMind 中，AI 会根据你的需求描述自动生成符合这些规范的 API 设计文档，让你专注于业务逻辑本身。</p>
