@@ -1,0 +1,2188 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CycleMind · 详细设计说明书 · 演示</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Poppins:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollToPlugin.min.js"></script>
+<style>
+/* ============ Tokens ============ */
+:root {
+  --bg-base: #ECE9E0;
+  --bg-raised: #F5F3EC;
+  --bg-inverted: #141413;
+  --bg-code: #1E1D1B;
+  --accent: #D97757;
+  --accent-soft: rgba(217, 119, 87, 0.12);
+  --text-primary: #141413;
+  --text-secondary: #6B6860;
+  --text-muted: #9A968C;
+  --text-inverted: #ECE9E0;
+  --border-subtle: #D8D5CC;
+  --border-soft: rgba(20, 20, 19, 0.08);
+  --error: #C0453A;
+  --success: #6B8E4E;
+  --info: #5E7A9E;
+  --font-display: 'Lora', Georgia, serif;
+  --font-heading: 'Poppins', -apple-system, sans-serif;
+  --font-body: 'Lora', Georgia, serif;
+  --font-ui: 'Poppins', -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-24: 96px;
+  --space-32: 128px;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-body);
+  font-size: 17px;
+  line-height: 1.7;
+  color: var(--text-primary);
+  background: var(--bg-base);
+  background-image:
+    radial-gradient(ellipse 70% 50% at 15% 8%, rgba(217,119,87,0.08) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 50% at 85% 35%, rgba(94,122,158,0.05) 0%, transparent 55%),
+    radial-gradient(ellipse 80% 40% at 50% 95%, rgba(107,142,78,0.04) 0%, transparent 60%);
+  background-attachment: fixed;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.35'/%3E%3C/svg%3E");
+  opacity: 0.12;
+  mix-blend-mode: multiply;
+}
+/* ============ Progress Bar ============ */
+.progress-rail {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: transparent;
+  z-index: 100;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  width: 0%;
+  box-shadow: 0 0 8px rgba(217,119,87,0.4);
+}
+/* ============ Nav ============ */
+.nav {
+  position: fixed;
+  top: var(--space-6);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-6);
+  background: rgba(245, 243, 236, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border-soft);
+  border-radius: 999px;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: 0 8px 32px rgba(20,20,19,0.06);
+}
+.nav-brand {
+  display: flex; align-items: center; gap: 8px;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+.nav-brand-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 3px rgba(217,119,87,0.2);
+  animation: pulse 2.5s var(--ease) infinite;
+}
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.3); opacity: 0.6; }
+}
+.nav-divider {
+  width: 1px; height: 16px; background: var(--border-subtle);
+}
+.nav-chapter-indicator { color: var(--text-secondary); }
+.nav-chapter-indicator strong { color: var(--accent); font-weight: 600; }
+/* ============ Layout ============ */
+.doc-wrap {
+  position: relative;
+  z-index: 2;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 var(--space-8);
+}
+/* ============ Hero ============ */
+.hero {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  align-items: center;
+  gap: var(--space-16);
+  padding: var(--space-24) 0 var(--space-16);
+  position: relative;
+}
+.hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  padding: 6px 12px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border-soft);
+  border-radius: 999px;
+  margin-bottom: var(--space-8);
+}
+.hero-eyebrow::before {
+  content: ''; width: 6px; height: 6px; background: var(--accent); border-radius: 50%;
+}
+.hero-title {
+  font-family: var(--font-display);
+  font-size: clamp(56px, 9vw, 112px);
+  font-weight: 500;
+  line-height: 0.98;
+  letter-spacing: -0.03em;
+  margin-bottom: var(--space-6);
+}
+.hero-title em {
+  font-style: italic;
+  color: var(--accent);
+  font-weight: 400;
+}
+.hero-subtitle {
+  font-family: var(--font-body);
+  font-size: 21px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  max-width: 34em;
+  margin-bottom: var(--space-10);
+}
+.hero-meta {
+  display: flex; flex-wrap: wrap; gap: var(--space-6);
+  padding-top: var(--space-8);
+  border-top: 1px solid var(--border-soft);
+}
+.hero-meta-item {
+  font-family: var(--font-ui); font-size: 13px;
+}
+.hero-meta-label { color: var(--text-muted); display: block; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px; }
+.hero-meta-value { color: var(--text-primary); font-weight: 500; }
+/* ============ Hero Stats ============ */
+.hero-visual {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+}
+.stat-card {
+  padding: var(--space-6);
+  background: var(--bg-raised);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+  font-family: var(--font-ui);
+  position: relative;
+  overflow: hidden;
+}
+.stat-card.dark {
+  background: var(--bg-inverted);
+  color: var(--text-inverted);
+  border-color: transparent;
+}
+.stat-card.accent {
+  background: var(--accent);
+  color: #fff;
+  border-color: transparent;
+}
+.stat-number {
+  font-family: var(--font-display);
+  font-size: 64px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  margin-bottom: 6px;
+}
+.stat-label {
+  font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase;
+  opacity: 0.7;
+}
+.stat-card .pulse-ring {
+  position: absolute; top: 16px; right: 16px;
+  width: 10px; height: 10px; border-radius: 50%;
+  background: rgba(255,255,255,0.4);
+}
+/* ============ Chapter Shell ============ */
+.chapter {
+  position: relative;
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: var(--space-12);
+  padding: var(--space-32) 0;
+  min-height: 80vh;
+  border-top: 1px dashed var(--border-subtle);
+}
+.chapter-anchor {
+  position: sticky;
+  top: 120px;
+  align-self: start;
+  height: fit-content;
+}
+.chapter-number {
+  font-family: var(--font-display);
+  font-size: clamp(140px, 16vw, 220px);
+  font-weight: 400;
+  line-height: 0.85;
+  color: var(--accent);
+  letter-spacing: -0.04em;
+  position: relative;
+  display: block;
+  opacity: 0.95;
+}
+.chapter-number::after {
+  content: attr(data-num);
+  position: absolute;
+  inset: 0;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(217,119,87,0.2);
+  transform: translate(8px, 8px);
+  z-index: -1;
+}
+.chapter-meta {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-top: var(--space-4);
+}
+.chapter-body {
+  max-width: 780px;
+  padding-top: var(--space-8);
+}
+.chapter-title {
+  font-family: var(--font-display);
+  font-size: clamp(36px, 5vw, 56px);
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  margin-bottom: var(--space-4);
+}
+.chapter-lede {
+  font-size: 19px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  max-width: 32em;
+  margin-bottom: var(--space-12);
+  font-family: var(--font-body);
+}
+.chapter-lede em { font-style: italic; color: var(--accent); }
+/* ============ Section (小节) ============ */
+.section {
+  position: relative;
+  padding: var(--space-8) 0;
+  border-top: 1px solid var(--border-soft);
+}
+.section:first-of-type { border-top: none; padding-top: 0; }
+.section-label {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  font-family: var(--font-ui);
+}
+.section-num {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 0.04em;
+}
+.section-title {
+  font-family: var(--font-heading);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+.section-body {
+  font-family: var(--font-body);
+  font-size: 16px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+.section-body p { margin-bottom: var(--space-3); }
+.section-body strong { color: var(--text-primary); font-weight: 600; }
+.section-body code {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  padding: 2px 6px;
+  background: var(--bg-raised);
+  border-radius: 4px;
+  color: var(--accent);
+  border: 1px solid var(--border-soft);
+}
+/* ============ Cards ============ */
+.card-grid {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+}
+.mini-card {
+  padding: var(--space-4) var(--space-6);
+  background: var(--bg-raised);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  display: flex;
+  gap: var(--space-4);
+  align-items: flex-start;
+  transition: transform 0.3s var(--ease), border-color 0.3s var(--ease);
+}
+.mini-card:hover {
+  transform: translateX(4px);
+  border-color: var(--accent);
+}
+.mini-card-index {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--accent);
+  font-weight: 600;
+  padding-top: 3px;
+  min-width: 32px;
+}
+.mini-card-title {
+  font-family: var(--font-heading);
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 2px;
+  color: var(--text-primary);
+}
+.mini-card-desc {
+  font-size: 14px;
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+}
+/* ============ Code Block ============ */
+.code-block {
+  background: var(--bg-code);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  margin: var(--space-6) 0;
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: #D4D4D0;
+  overflow-x: auto;
+  border: 1px solid rgba(255,255,255,0.04);
+  position: relative;
+}
+.code-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  font-family: var(--font-ui);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.5);
+}
+.code-header-dots { display: flex; gap: 6px; }
+.code-header-dots span {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: rgba(255,255,255,0.15);
+}
+.code-line { display: block; min-height: 1.7em; }
+.tok-k { color: #D7A67B; }  /* keyword */
+.tok-s { color: #8EB795; }  /* string */
+.tok-c { color: #6B6860; font-style: italic; }  /* comment */
+.tok-n { color: #D97757; }  /* number/constant */
+.tok-t { color: #C8B191; }  /* type */
+.tok-f { color: #E9C98C; }  /* function */
+.tok-p { color: #A8A8A0; }  /* punctuation */
+/* ============ Table ============ */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: var(--space-6) 0;
+  background: var(--bg-raised);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  font-family: var(--font-ui);
+  font-size: 14px;
+}
+.data-table th {
+  text-align: left;
+  padding: var(--space-3) var(--space-4);
+  background: rgba(20,20,19,0.03);
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-soft);
+}
+.data-table td {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border-soft);
+  color: var(--text-primary);
+  vertical-align: top;
+}
+.data-table tr:last-child td { border-bottom: none; }
+.data-table td code {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  background: rgba(217,119,87,0.08);
+  color: var(--accent);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.data-table tbody tr {
+  transition: background 0.2s var(--ease);
+}
+.data-table tbody tr:hover {
+  background: rgba(217,119,87,0.04);
+}
+/* ============ Pill / Badge ============ */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  border-radius: 999px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border-soft);
+  color: var(--text-secondary);
+}
+.pill.accent { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.pill.dark { background: var(--bg-inverted); color: var(--text-inverted); border-color: transparent; }
+.pill.error { background: rgba(192,69,58,0.08); color: var(--error); border-color: transparent; }
+.pill.success { background: rgba(107,142,78,0.1); color: var(--success); border-color: transparent; }
+/* ============ Agent Grid (Ch5) ============ */
+.agent-board {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-3);
+  margin: var(--space-8) 0;
+}
+.agent-board.single { grid-template-columns: 1fr; }
+.agent-tile.full { grid-column: 1 / -1; }
+.agent-tile {
+  padding: var(--space-6);
+  background: var(--bg-raised);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s var(--ease);
+}
+.agent-tile:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(20,20,19,0.06);
+}
+.agent-tile.special {
+  background: var(--bg-inverted);
+  color: var(--text-inverted);
+  border-color: transparent;
+}
+.agent-tile.special .agent-meta { color: rgba(236,233,224,0.5); }
+.agent-tile.special .agent-sub { color: rgba(236,233,224,0.7); }
+.agent-tile-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--space-4);
+}
+.agent-tile-icon {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+  padding: 3px 8px;
+  background: var(--accent-soft);
+  border-radius: 4px;
+  font-weight: 600;
+}
+.agent-tile.special .agent-tile-icon {
+  background: rgba(217,119,87,0.2);
+}
+.agent-name {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 500;
+  margin-bottom: 2px;
+  letter-spacing: -0.01em;
+}
+.agent-sub {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: var(--space-4);
+}
+.agent-meta {
+  display: flex;
+  gap: var(--space-4);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border-soft);
+}
+.agent-tile.special .agent-meta { border-top-color: rgba(255,255,255,0.1); }
+.agent-meta span strong {
+  color: var(--accent);
+  font-weight: 600;
+  margin-left: 4px;
+}
+.limit-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border-soft);
+}
+.limit-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.limit-key { color: var(--text-muted); }
+.limit-val { color: var(--accent); font-weight: 600; }
+/* ============ Flow Diagram (SVG-like via CSS) ============ */
+.flow-diagram {
+  margin: var(--space-8) 0;
+  padding: var(--space-8);
+  background: var(--bg-raised);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-soft);
+  font-family: var(--font-ui);
+  font-size: 13px;
+}
+.flow-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+.flow-row:last-child { margin-bottom: 0; }
+.flow-node {
+  padding: 10px 16px;
+  background: #fff;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  white-space: nowrap;
+  font-weight: 500;
+  font-size: 13px;
+  transition: all 0.3s var(--ease);
+}
+.flow-node.entry { background: var(--accent); color: #fff; border-color: transparent; }
+.flow-node.dark { background: var(--bg-inverted); color: var(--text-inverted); border-color: transparent; }
+.flow-node.db { background: var(--info); color: #fff; border-color: transparent; }
+.flow-arrow {
+  flex: 1;
+  height: 1px;
+  background: repeating-linear-gradient(90deg, var(--border-subtle) 0, var(--border-subtle) 4px, transparent 4px, transparent 8px);
+  position: relative;
+}
+.flow-arrow::after {
+  content: '';
+  position: absolute; right: -4px; top: 50%;
+  width: 0; height: 0;
+  border-left: 6px solid var(--border-subtle);
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  transform: translateY(-50%);
+}
+.flow-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.flow-forks {
+  margin-top: var(--space-4);
+  padding-left: var(--space-12);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  position: relative;
+}
+.flow-forks::before {
+  content: '';
+  position: absolute;
+  left: calc(var(--space-12) - 16px);
+  top: -8px;
+  bottom: 14px;
+  width: 1px;
+  background: var(--border-subtle);
+}
+.flow-fork-arm {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.fork-connector {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-right: 4px;
+  position: relative;
+  left: -8px;
+}
+/* ============ Stack Diagram (Ch 2.1) ============ */
+.stack-diagram {
+  margin: var(--space-8) 0;
+  padding: var(--space-6);
+  background: var(--bg-raised);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+}
+.stack-layer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  padding: var(--space-4) var(--space-6);
+  background: #fff;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+.stack-layer-label {
+  flex: 0 0 140px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-family: var(--font-ui);
+}
+.stack-layer-num {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--accent);
+}
+.stack-layer-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+.stack-layer-tag {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+.stack-layer-nodes {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+.stack-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 14px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+.stack-pill.accent {
+  background: var(--accent);
+  color: #fff;
+  border-color: transparent;
+}
+.stack-pill.dark {
+  background: var(--bg-inverted);
+  color: var(--text-inverted);
+  border-color: transparent;
+}
+.stack-pill.db {
+  background: var(--info);
+  color: #fff;
+  border-color: transparent;
+}
+.stack-link {
+  display: flex;
+  align-items: center;
+  padding-left: calc(140px + var(--space-6) + 12px);
+  height: 28px;
+  position: relative;
+}
+.stack-link::before {
+  content: '';
+  position: absolute;
+  left: calc(140px + var(--space-6) + 12px - 12px);
+  top: -2px;
+  bottom: -2px;
+  width: 2px;
+  background: repeating-linear-gradient(to bottom, var(--border-subtle) 0 4px, transparent 4px 8px);
+}
+.stack-link-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  padding-left: var(--space-3);
+}
+/* ============ SSE Stream Visualization ============ */
+.sse-stream {
+  margin: var(--space-6) 0;
+  background: var(--bg-code);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: #D4D4D0;
+  position: relative;
+  overflow: hidden;
+}
+.sse-event {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 10px 12px;
+  margin-bottom: 6px;
+  background: rgba(255,255,255,0.03);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid transparent;
+}
+.sse-event.status { border-left-color: var(--info); }
+.sse-event.agents { border-left-color: #D7A67B; }
+.sse-event.agent_start { border-left-color: var(--accent); }
+.sse-event.agent_output { border-left-color: var(--success); }
+.sse-event.agent_error { border-left-color: var(--error); }
+.sse-event.doc_saved { border-left-color: #C8B191; }
+.sse-event.done { border-left-color: #E9C98C; }
+.sse-type { color: var(--accent); min-width: 120px; font-weight: 600; }
+.sse-payload { color: rgba(255,255,255,0.7); font-size: 12px; flex: 1; }
+.sse-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: currentColor;
+  animation: blink 1.5s infinite;
+}
+@keyframes blink { 0%,100% { opacity:1 } 50% { opacity:0.3 } }
+/* ============ Version Chain (Ch10) ============ */
+.version-chain {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin: var(--space-8) 0;
+  font-family: var(--font-ui);
+}
+.version-node {
+  padding: var(--space-4) var(--space-6);
+  background: var(--bg-raised);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  text-align: center;
+  min-width: 140px;
+}
+.version-node.latest { background: var(--accent); color: #fff; border-color: transparent; }
+.version-node .v-num {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  display: block;
+}
+.version-node .v-meta { font-size: 11px; opacity: 0.7; font-family: var(--font-mono); }
+.version-link {
+  flex: 0 0 40px;
+  height: 2px;
+  background: var(--border-subtle);
+  position: relative;
+}
+.version-link::before {
+  content: 'parent';
+  position: absolute;
+  top: -22px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+}
+/* ============ Status Grid (Ch11) ============ */
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+  margin: var(--space-6) 0;
+}
+.status-cell {
+  padding: var(--space-4);
+  background: var(--bg-raised);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+}
+.status-cell .code {
+  font-family: var(--font-display);
+  font-size: 40px;
+  font-weight: 500;
+  line-height: 1;
+  margin-bottom: 6px;
+  color: var(--text-primary);
+}
+.status-cell.e { color: var(--error); }
+.status-cell.e .code { color: var(--error); }
+.status-cell.s { color: var(--success); }
+.status-cell.s .code { color: var(--success); }
+.status-cell .label {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+/* ============ Footer ============ */
+.doc-footer {
+  padding: var(--space-24) 0 var(--space-16);
+  margin-top: var(--space-24);
+  border-top: 1px solid var(--border-soft);
+  text-align: center;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.footer-title {
+  font-family: var(--font-display);
+  font-size: 48px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: var(--space-4);
+  letter-spacing: -0.02em;
+}
+.footer-title em { font-style: italic; color: var(--accent); }
+.footer-meta {
+  display: inline-flex; gap: var(--space-6);
+  padding: var(--space-3) var(--space-6);
+  margin-top: var(--space-8);
+  background: var(--bg-raised);
+  border: 1px solid var(--border-soft);
+  border-radius: 999px;
+}
+/* ============ Responsive ============ */
+@media (max-width: 900px) {
+  .hero { grid-template-columns: 1fr; padding: var(--space-16) 0; }
+  .chapter { grid-template-columns: 1fr; gap: var(--space-8); padding: var(--space-16) 0; }
+  .chapter-anchor { position: static; }
+  .chapter-number { font-size: 120px; }
+  .agent-board { grid-template-columns: 1fr; }
+  .status-grid { grid-template-columns: repeat(2, 1fr); }
+  .version-chain { flex-direction: column; gap: var(--space-2); }
+  .version-link { width: 2px; height: 40px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-rail"><div class="progress-fill" id="progress"></div></div>
+
+<nav class="nav">
+  <span class="nav-brand"><span class="nav-brand-dot"></span>CycleMind</span>
+  <span class="nav-divider"></span>
+  <span class="nav-chapter-indicator" id="nav-ch">详细设计说明书 · <strong>第 <span id="nav-num">00</span> 章</strong></span>
+</nav>
+
+<div class="doc-wrap">
+
+<!-- ============ HERO ============ -->
+<section class="hero" id="hero">
+  <div class="hero-left">
+    <span class="hero-eyebrow">Detailed Design Specification · v1.0</span>
+    <h1 class="hero-title">详细<em>设计</em><br/>说明书</h1>
+    <p class="hero-subtitle">
+      一份贴着代码写的技术文档——从函数签名、SSE 协议到版本链算法，
+      把 <em>CycleMind</em> 多智能体系统的每一处实现细节都落到纸上。
+    </p>
+    <div class="hero-meta">
+      <div class="hero-meta-item">
+        <span class="hero-meta-label">Project</span>
+        <span class="hero-meta-value">CycleMind / AI-SDLC</span>
+      </div>
+      <div class="hero-meta-item">
+        <span class="hero-meta-label">Version</span>
+        <span class="hero-meta-value">v1.0</span>
+      </div>
+      <div class="hero-meta-item">
+        <span class="hero-meta-label">Date</span>
+        <span class="hero-meta-value">2026-04-15</span>
+      </div>
+      <div class="hero-meta-item">
+        <span class="hero-meta-label">Companion</span>
+        <span class="hero-meta-value">概要设计说明书 v1.0</span>
+      </div>
+    </div>
+  </div>
+  <div class="hero-visual">
+    <div class="stat-card">
+      <div class="stat-number" data-target="14">0</div>
+      <div class="stat-label">Chapters · 章节</div>
+    </div>
+    <div class="stat-card dark">
+      <div class="pulse-ring"></div>
+      <div class="stat-number" data-target="7">0</div>
+      <div class="stat-label">Agents · 智能体</div>
+    </div>
+    <div class="stat-card accent">
+      <div class="stat-number" data-target="793">0</div>
+      <div class="stat-label">Lines · 文档行数</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" data-target="8">0</div>
+      <div class="stat-label">DB Tables · 数据表</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CHAPTER 1 · 引言 ============ -->
+<section class="chapter" id="ch-1" data-num="01">
+  <aside class="chapter-anchor">
+    <span class="chapter-number" data-num="01">01</span>
+    <div class="chapter-meta">Ch · 01 / 14</div>
+  </aside>
+  <div class="chapter-body">
+    <h2 class="chapter-title">引言</h2>
+    <p class="chapter-lede">
+      把概要设计书里留白的地方，<em>用函数签名和算法步骤</em>填满。这一章定义本文存在的理由、
+      读者画像、技术栈假设。
+    </p>
+    <div class="section">
+      <div class="section-label"><span class="section-num">1.1</span><span class="section-title">编写目的</span></div>
+      <p class="section-body">在《概要设计说明书》基础上进一步细化到<strong>函数签名、数据结构、算法流程、接口协议、错误码</strong>层面，作为编码实施阶段的最终依据和单元测试编写基础。</p>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">1.2</span><span class="section-title">阅读对象</span></div>
+      <div class="card-grid">
+        <div class="mini-card"><span class="mini-card-index">A</span><div><div class="mini-card-title">后端研发</div><div class="mini-card-desc">实现 API 路由、Agent、数据访问</div></div></div>
+        <div class="mini-card"><span class="mini-card-index">B</span><div><div class="mini-card-title">前端研发</div><div class="mini-card-desc">对接 SSE、Store、组件</div></div></div>
+        <div class="mini-card"><span class="mini-card-index">C</span><div><div class="mini-card-title">测试工程师</div><div class="mini-card-desc">编写单测、接口测试、端到端测试</div></div></div>
+        <div class="mini-card"><span class="mini-card-index">D</span><div><div class="mini-card-title">新成员</div><div class="mini-card-desc">以"代码级"视角理解系统</div></div></div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">1.3</span><span class="section-title">术语沿用</span></div>
+      <p class="section-body">本文所有术语与概要设计说明书一致（<code>Agent</code>、<code>Orchestrator</code>、<code>Session</code>、<code>Document</code>、<code>Append-Only</code>、<code>SSE</code>、<code>[READY]</code> 标记等），不再重复定义。</p>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">1.4</span><span class="section-title">实现技术栈</span></div>
+      <p class="section-body">只读引用，不再展开论证。</p>
+      <div class="card-grid">
+        <div class="mini-card"><span class="mini-card-index">01</span><div><div class="mini-card-title">TypeScript · Next.js 16 App Router · Node.js Runtime</div></div></div>
+        <div class="mini-card"><span class="mini-card-index">02</span><div><div class="mini-card-title">Drizzle ORM + @neondatabase/serverless</div></div></div>
+        <div class="mini-card"><span class="mini-card-index">03</span><div><div class="mini-card-title">Auth.js v5（next-auth@beta）+ @auth/drizzle-adapter + bcryptjs</div></div></div>
+        <div class="mini-card"><span class="mini-card-index">04</span><div><div class="mini-card-title">OpenAI SDK 与原生 fetch（流式场景）</div></div></div>
+        <div class="mini-card"><span class="mini-card-index">05</span><div><div class="mini-card-title">Zustand（前端 Store）· Zod（输入校验）</div></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CHAPTER 2 · 程序系统组织 ============ -->
+<section class="chapter" id="ch-2" data-num="02">
+  <aside class="chapter-anchor">
+    <span class="chapter-number" data-num="02">02</span>
+    <div class="chapter-meta">Ch · 02 / 14</div>
+  </aside>
+  <div class="chapter-body">
+    <h2 class="chapter-title">程序系统组织</h2>
+    <p class="chapter-lede">五层架构，沿<em>浏览器 → Route Handler → Agent → ORM → Neon</em>方向单向穿过。</p>
+    <div class="section">
+      <div class="section-label"><span class="section-num">2.1</span><span class="section-title">运行时分层与调用链</span></div>
+      <div class="stack-diagram">
+        <div class="stack-layer">
+          <div class="stack-layer-label">
+            <span class="stack-layer-num">L1</span>
+            <span class="stack-layer-name">展示层</span>
+            <span class="stack-layer-tag">浏览器</span>
+          </div>
+          <div class="stack-layer-nodes">
+            <span class="stack-pill accent">浏览器组件</span>
+            <span class="stack-pill">Zustand Store</span>
+          </div>
+        </div>
+        <div class="stack-link"><span class="stack-link-label">fetch · SSE</span></div>
+        <div class="stack-layer">
+          <div class="stack-layer-label">
+            <span class="stack-layer-num">L2</span>
+            <span class="stack-layer-name">应用服务</span>
+            <span class="stack-layer-tag">Vercel Serverless</span>
+          </div>
+          <div class="stack-layer-nodes">
+            <span class="stack-pill dark">Next.js Route Handler</span>
+          </div>
+        </div>
+        <div class="stack-link"><span class="stack-link-label">import · function call</span></div>
+        <div class="stack-layer">
+          <div class="stack-layer-label">
+            <span class="stack-layer-num">L3</span>
+            <span class="stack-layer-name">业务与数据</span>
+            <span class="stack-layer-tag">lib/*</span>
+          </div>
+          <div class="stack-layer-nodes">
+            <span class="stack-pill">lib/ai/agents/*</span>
+            <span class="stack-pill">lib/db/queries/*</span>
+            <span class="stack-pill">Drizzle ORM</span>
+          </div>
+        </div>
+        <div class="stack-link"><span class="stack-link-label">HTTPS</span></div>
+        <div class="stack-layer">
+          <div class="stack-layer-label">
+            <span class="stack-layer-num">L4</span>
+            <span class="stack-layer-name">外部服务</span>
+            <span class="stack-layer-tag">3rd-party</span>
+          </div>
+          <div class="stack-layer-nodes">
+            <span class="stack-pill db">DeepSeek API</span>
+            <span class="stack-pill db">Neon PostgreSQL</span>
+            <span class="stack-pill db">GitHub OAuth</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">2.2</span><span class="section-title">代码模块组织</span></div>
+      <table class="data-table">
+        <thead><tr><th>层</th><th>路径</th><th>内容</th></tr></thead>
+        <tbody>
+          <tr><td>页面</td><td><code>app/(auth)</code>、<code>app/(dashboard)</code></td><td>Server Components</td></tr>
+          <tr><td>API</td><td><code>app/api/**/route.ts</code></td><td>12+ 路由处理器</td></tr>
+          <tr><td>业务</td><td><code>lib/ai/agents/*</code></td><td>7 个 Agent + prompts</td></tr>
+          <tr><td>数据访问</td><td><code>lib/db/queries/*</code></td><td>5 个领域 Query 文件</td></tr>
+          <tr><td>Schema</td><td><code>lib/db/schema.ts</code></td><td>Drizzle Schema + Relations</td></tr>
+          <tr><td>认证</td><td><code>lib/auth/index.ts</code></td><td>NextAuth 配置</td></tr>
+          <tr><td>校验</td><td><code>lib/validations.ts</code></td><td>Zod Schema 集合</td></tr>
+          <tr><td>状态</td><td><code>stores/*.ts</code></td><td>Zustand Store</td></tr>
+          <tr><td>组件</td><td><code>components/**/*.tsx</code></td><td>React UI</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">2.3</span><span class="section-title">命名约定</span></div>
+      <table class="data-table">
+        <thead><tr><th>对象</th><th>约定</th><th>示例</th></tr></thead>
+        <tbody>
+          <tr><td>文件</td><td>kebab-case</td><td><code>chat-panel.tsx</code></td></tr>
+          <tr><td>路由文件名</td><td>固定</td><td><code>route.ts</code></td></tr>
+          <tr><td>动态段</td><td>[param]</td><td><code>app/api/sessions/[id]</code></td></tr>
+          <tr><td>函数</td><td>camelCase</td><td><code>getSessionById</code></td></tr>
+          <tr><td>类型</td><td>PascalCase</td><td><code>AgentType</code></td></tr>
+          <tr><td>常量</td><td>SCREAMING_SNAKE_CASE</td><td><code>MAX_HISTORY_MESSAGES</code></td></tr>
+          <tr><td>Store hook</td><td>use&lt;Name&gt;Store</td><td><code>useGenerationStore</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CHAPTER 3 · 认证 ============ -->
+<section class="chapter" id="ch-3" data-num="03">
+  <aside class="chapter-anchor">
+    <span class="chapter-number" data-num="03">03</span>
+    <div class="chapter-meta">Ch · 03 / 14</div>
+  </aside>
+  <div class="chapter-body">
+    <h2 class="chapter-title">认证模块</h2>
+    <p class="chapter-lede">基于 <em>Auth.js v5</em> 的 JWT 策略；支持 Credentials 与 GitHub 两种登录路径；无服务端会话存储。</p>
+    <div class="section">
+      <div class="section-label"><span class="section-num">3.1</span><span class="section-title">模块概述</span></div>
+      <p class="section-body">集中式认证入口，密码哈希使用 bcryptjs，salt rounds 默认 <strong>10</strong>。</p>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">3.2</span><span class="section-title">文件结构</span></div>
+      <table class="data-table">
+        <tbody>
+          <tr><td><code>lib/auth/index.ts</code></td><td>NextAuth 实例，导出 <code>auth / handlers / signIn / signOut</code></td></tr>
+          <tr><td><code>middleware.ts</code></td><td>基于 <code>auth()</code> 的路由保护</td></tr>
+          <tr><td><code>app/api/auth/[...nextauth]/route.ts</code></td><td>Auth.js 统一端点</td></tr>
+          <tr><td><code>app/api/register/route.ts</code></td><td>邮箱注册（独立于 Auth.js）</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">3.3</span><span class="section-title">NextAuth 配置</span></div>
+      <div class="code-block">
+        <div class="code-header"><span>lib/auth/index.ts</span><div class="code-header-dots"><span></span><span></span><span></span></div></div>
+<span class="code-line"><span class="tok-k">export const</span> { auth, handlers, signIn, signOut } = <span class="tok-f">NextAuth</span>({</span>
+<span class="code-line">  adapter: <span class="tok-f">DrizzleAdapter</span>(db, { usersTable, accountsTable, sessionsTable, verificationTokensTable }),</span>
+<span class="code-line">  providers: [</span>
+<span class="code-line">    <span class="tok-f">GitHub</span>({ clientId: <span class="tok-s">env.GITHUB_CLIENT_ID</span>, clientSecret: <span class="tok-s">env.GITHUB_CLIENT_SECRET</span> }),</span>
+<span class="code-line">    <span class="tok-f">Credentials</span>({</span>
+<span class="code-line">      name: <span class="tok-s">"credentials"</span>,</span>
+<span class="code-line">      credentials: { email: { type: <span class="tok-s">"email"</span> }, password: { type: <span class="tok-s">"password"</span> } },</span>
+<span class="code-line">      <span class="tok-k">async</span> <span class="tok-f">authorize</span>(credentials) { <span class="tok-c">/* bcrypt.compare + select users */</span> }</span>
+<span class="code-line">    })</span>
+<span class="code-line">  ],</span>
+<span class="code-line">  session: { strategy: <span class="tok-s">"jwt"</span> },</span>
+<span class="code-line">  callbacks: { session, jwt },</span>
+<span class="code-line">  pages: { signIn: <span class="tok-s">"/login"</span> }</span>
+<span class="code-line">});</span>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">3.4</span><span class="section-title">Credentials 登录流程</span></div>
+      <div class="flow-diagram">
+        <div class="flow-row"><div class="flow-node entry">用户</div><div class="flow-arrow"></div><div class="flow-node">/login 表单</div><div class="flow-arrow"></div><div class="flow-node dark">NextAuth</div><div class="flow-arrow"></div><div class="flow-node db">users 表</div></div>
+        <div class="flow-row" style="margin-top:16px;padding-left:24px">
+          <span class="pill success">校验成功</span>
+          <span style="color:var(--text-muted);font-family:var(--font-mono);font-size:12px">→ 签发 JWT → Set-Cookie → 302 /dashboard</span>
+        </div>
+        <div class="flow-row" style="padding-left:24px">
+          <span class="pill error">校验失败</span>
+          <span style="color:var(--text-muted);font-family:var(--font-mono);font-size:12px">→ 401 → 展示错误（不区分"不存在"与"密码错"）</span>
+        </div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">3.5</span><span class="section-title">注册流程（/api/register）</span></div>
+      <div class="card-grid">
+        <div class="mini-card"><span class="mini-card-index">1</span><div><div class="mini-card-title">接收 { email, password, name }</div><div class="mini-card-desc">Zod 校验：email 合法、password 长度 ≥ 8</div></div></div>
+        <div class="mini-card"><span class="mini-card-index">2</span><div><div class="mini-card-title">邮箱重复性检查</div><div class="mini-card-desc">SELECT 已存在 → 409</div></div></div>
+        <div class="mini-card"><span class="mini-card-index">3</span><div><div class="mini-card-title">bcrypt.hash(password, 10)</div><div class="mini-card-desc">生成 passwordHash</div></div></div>
+        <div class="mini-card"><span class="mini-card-index">4</span><div><div class="mini-card-title">INSERT INTO users</div><div class="mini-card-desc">返回 id</div></div></div>
+        <div class="mini-card"><span class="mini-card-index">5</span><div><div class="mini-card-title">响应 { id, email }</div><div class="mini-card-desc">状态码 201</div></div></div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">3.6</span><span class="section-title">JWT 回调职责</span></div>
+      <p class="section-body"><strong>jwt({ token, user })</strong> — 首次登录把 <code>user.id</code> 写入 <code>token.sub</code>。<br><strong>session({ session, token })</strong> — 将 <code>token.sub</code> 注入 <code>session.user.id</code>。</p>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">3.7</span><span class="section-title">中间件路由保护</span></div>
+      <p class="section-body">未登录访问私有页 → 302 <code>/login</code>；已登录访问 <code>/login</code>、<code>/register</code> → 302 <code>/dashboard</code>；API 路由内部再次调用 <code>auth()</code> 做二次校验。</p>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">3.8</span><span class="section-title">接口签名</span></div>
+      <div class="code-block">
+        <div class="code-header"><span>lib/auth/index.ts</span><div class="code-header-dots"><span></span><span></span><span></span></div></div>
+<span class="code-line"><span class="tok-k">export const</span> auth: () => <span class="tok-t">Promise</span>&lt;<span class="tok-t">Session</span> | <span class="tok-k">null</span>&gt;;</span>
+<span class="code-line"></span>
+<span class="code-line"><span class="tok-k">interface</span> <span class="tok-t">Session</span> {</span>
+<span class="code-line">  user: { id: <span class="tok-t">string</span>; name?: <span class="tok-t">string</span>; email?: <span class="tok-t">string</span>; image?: <span class="tok-t">string</span> };</span>
+<span class="code-line">  expires: <span class="tok-t">string</span>;</span>
+<span class="code-line">}</span>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">3.9</span><span class="section-title">安全注意</span></div>
+      <div class="card-grid">
+        <div class="mini-card"><span class="mini-card-index">!</span><div><div class="mini-card-title">NEXTAUTH_SECRET 必须来自环境变量</div><div class="mini-card-desc">开发默认值禁止入生产</div></div></div>
+        <div class="mini-card"><span class="mini-card-index">!</span><div><div class="mini-card-title">salt rounds 不得低于 8</div><div class="mini-card-desc">默认 10；如性能敏感可降至 8</div></div></div>
+        <div class="mini-card"><span class="mini-card-index">!</span><div><div class="mini-card-title">失败分支统一返回 null</div><div class="mini-card-desc">不向外泄漏"用户不存在"与"密码错误"的差异</div></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CHAPTER 4 · 会话管理 ============ -->
+<section class="chapter" id="ch-4" data-num="04">
+  <aside class="chapter-anchor">
+    <span class="chapter-number" data-num="04">04</span>
+    <div class="chapter-meta">Ch · 04 / 14</div>
+  </aside>
+  <div class="chapter-body">
+    <h2 class="chapter-title">会话管理</h2>
+    <p class="chapter-lede">Session 是<em>用户与 CycleMind 的一次设计循环</em>——承载对话、产物、状态。</p>
+    <div class="section">
+      <div class="section-label"><span class="section-num">4.1</span><span class="section-title">模块概述</span></div>
+      <p class="section-body">管理用户维度的 Session 资源；所有操作经过归属校验，杜绝越权。</p>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">4.2</span><span class="section-title">接口清单</span></div>
+      <table class="data-table">
+        <thead><tr><th>方法</th><th>路径</th><th>职能</th></tr></thead>
+        <tbody>
+          <tr><td><span class="pill accent">GET</span></td><td><code>/api/sessions</code></td><td>列出当前用户全部 Session（updatedAt 降序）</td></tr>
+          <tr><td><span class="pill success">POST</span></td><td><code>/api/sessions</code></td><td>创建新 Session</td></tr>
+          <tr><td><span class="pill accent">GET</span></td><td><code>/api/sessions/[id]</code></td><td>Session 详情（归属校验）</td></tr>
+          <tr><td><span class="pill">PATCH</span></td><td><code>/api/sessions/[id]</code></td><td>修改 title / description / status</td></tr>
+          <tr><td><span class="pill error">DELETE</span></td><td><code>/api/sessions/[id]</code></td><td>删除（级联清理文档与消息）</td></tr>
+          <tr><td><span class="pill accent">GET</span></td><td><code>/api/sessions/[id]/messages</code></td><td>消息历史</td></tr>
+          <tr><td><span class="pill success">POST</span></td><td><code>/api/sessions/[id]/messages</code></td><td>追加用户消息</td></tr>
+          <tr><td><span class="pill accent">GET</span></td><td><code>/api/sessions/[id]/documents</code></td><td>文档列表</td></tr>
+          <tr><td><span class="pill success">POST</span></td><td><code>/api/sessions/[id]/documents</code></td><td>创建新版本文档</td></tr>
+          <tr><td><span class="pill success">POST</span></td><td><code>/api/sessions/[id]/chat</code></td><td>Conversation Agent 对话</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">4.3</span><span class="section-title">鉴权模板</span></div>
+      <div class="code-block">
+        <div class="code-header"><span>所有会话路由统一使用</span><div class="code-header-dots"><span></span><span></span><span></span></div></div>
+<span class="code-line"><span class="tok-c">// 1. 认证</span></span>
+<span class="code-line"><span class="tok-k">const</span> session = <span class="tok-k">await</span> <span class="tok-f">auth</span>();</span>
+<span class="code-line"><span class="tok-k">if</span> (!session?.user?.id) <span class="tok-k">return</span> <span class="tok-t">NextResponse</span>.<span class="tok-f">json</span>({ error: <span class="tok-s">"Unauthorized"</span> }, { status: <span class="tok-n">401</span> });</span>
+<span class="code-line"><span class="tok-c">// 2. Zod 校验 body</span></span>
+<span class="code-line"><span class="tok-k">const</span> body = <span class="tok-t">SomeSchema</span>.<span class="tok-f">safeParse</span>(<span class="tok-k">await</span> req.<span class="tok-f">json</span>());</span>
+<span class="code-line"><span class="tok-k">if</span> (!body.success) <span class="tok-k">return</span> <span class="tok-t">NextResponse</span>.<span class="tok-f">json</span>({ error: body.error.message }, { status: <span class="tok-n">400</span> });</span>
+<span class="code-line"><span class="tok-c">// 3. 归属校验</span></span>
+<span class="code-line"><span class="tok-k">const</span> s = <span class="tok-k">await</span> <span class="tok-f">getSessionById</span>(params.id);</span>
+<span class="code-line"><span class="tok-k">if</span> (!s || s.userId !== session.user.id) <span class="tok-k">return</span> <span class="tok-t">NextResponse</span>.<span class="tok-f">json</span>({ error: <span class="tok-s">"Not found"</span> }, { status: <span class="tok-n">404</span> });</span>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">4.4</span><span class="section-title">创建 Session 请求/响应</span></div>
+      <div class="code-block">
+        <div class="code-header"><span>POST /api/sessions</span><div class="code-header-dots"><span></span><span></span><span></span></div></div>
+<span class="code-line"><span class="tok-c">// Request</span></span>
+<span class="code-line">{ <span class="tok-s">"title"</span>: <span class="tok-s">"string, 1-100"</span>, <span class="tok-s">"description"</span>: <span class="tok-s">"string?"</span> }</span>
+<span class="code-line"></span>
+<span class="code-line"><span class="tok-c">// Response 201</span></span>
+<span class="code-line">{ <span class="tok-s">"id"</span>: <span class="tok-s">"uuid"</span>, <span class="tok-s">"title"</span>: <span class="tok-s">"..."</span>, <span class="tok-s">"status"</span>: <span class="tok-s">"active"</span>, <span class="tok-s">"createdAt"</span>: ..., <span class="tok-s">"updatedAt"</span>: ... }</span>
+      </div>
+      <p class="section-body">错误码：<span class="pill error">400</span> 校验失败 · <span class="pill error">401</span> 未登录 · <span class="pill error">500</span> DB 异常</p>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">4.5</span><span class="section-title">Query 函数签名</span></div>
+      <div class="code-block">
+        <div class="code-header"><span>lib/db/queries/sessions.ts</span><div class="code-header-dots"><span></span><span></span><span></span></div></div>
+<span class="code-line"><span class="tok-k">export async function</span> <span class="tok-f">getUserSessions</span>(userId: <span class="tok-t">string</span>): <span class="tok-t">Promise</span>&lt;<span class="tok-t">Session</span>[]&gt;;</span>
+<span class="code-line"><span class="tok-k">export async function</span> <span class="tok-f">getSessionById</span>(id: <span class="tok-t">string</span>): <span class="tok-t">Promise</span>&lt;<span class="tok-t">Session</span> | <span class="tok-k">null</span>&gt;;</span>
+<span class="code-line"><span class="tok-k">export async function</span> <span class="tok-f">createSession</span>(data: <span class="tok-t">CreateSessionInput</span>): <span class="tok-t">Promise</span>&lt;<span class="tok-t">Session</span>&gt;;</span>
+<span class="code-line"><span class="tok-k">export async function</span> <span class="tok-f">updateSession</span>(id: <span class="tok-t">string</span>, data: <span class="tok-t">Partial</span>&lt;<span class="tok-t">Session</span>&gt;): <span class="tok-t">Promise</span>&lt;<span class="tok-t">Session</span>&gt;;</span>
+<span class="code-line"><span class="tok-k">export async function</span> <span class="tok-f">deleteSession</span>(id: <span class="tok-t">string</span>): <span class="tok-t">Promise</span>&lt;<span class="tok-k">void</span>&gt;;</span>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">4.6</span><span class="section-title">状态机</span></div>
+      <div class="flow-diagram">
+        <div class="flow-row">
+          <div class="flow-node entry">active</div>
+          <div class="flow-arrow"></div>
+          <div class="flow-node">archived</div>
+          <div class="flow-arrow"></div>
+          <div class="flow-node dark">completed</div>
+        </div>
+        <p style="margin-top:16px;font-family:var(--font-ui);font-size:13px;color:var(--text-secondary)">单向推荐流转，不在 DB 层强制；由业务代码约束。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CHAPTER 5 · 多 Agent 编排 ============ -->
+<section class="chapter" id="ch-5" data-num="05">
+  <aside class="chapter-anchor">
+    <span class="chapter-number" data-num="05">05</span>
+    <div class="chapter-meta">Ch · 05 / 14</div>
+  </aside>
+  <div class="chapter-body">
+    <h2 class="chapter-title">多 Agent 编排</h2>
+    <p class="chapter-lede">
+      Agent 层是 CycleMind 的核心业务逻辑。<em>7 个 Agent，3 种类型</em>：
+      编排、对话、生成。
+    </p>
+    <div class="section">
+      <div class="section-label"><span class="section-num">5.1</span><span class="section-title">模块概述</span></div>
+      <p class="section-body">7 个 Agent，按功能分为<strong>编排类</strong>（1）、<strong>对话类</strong>（1）、<strong>生成类</strong>（5）。</p>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">5.2</span><span class="section-title">公共类型</span></div>
+      <div class="code-block">
+        <div class="code-header"><span>lib/ai/agents/orchestrator.ts · lib/ai/index.ts</span><div class="code-header-dots"><span></span><span></span><span></span></div></div>
+<span class="code-line"><span class="tok-k">export type</span> <span class="tok-t">AgentType</span> = <span class="tok-s">"requirement"</span> | <span class="tok-s">"design"</span> | <span class="tok-s">"er"</span> | <span class="tok-s">"api"</span> | <span class="tok-s">"plan"</span>;</span>
+<span class="code-line"><span class="tok-k">export const</span> <span class="tok-n">AI_MODEL</span> = <span class="tok-s">"deepseek-chat"</span>;</span>
+<span class="code-line"><span class="tok-k">export const</span> ai: <span class="tok-t">OpenAI</span>; <span class="tok-c">// baseURL 指向 https://api.deepseek.com</span></span>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">5.3</span><span class="section-title">Orchestrator 详细设计</span></div>
+      <div class="agent-board single">
+        <div class="agent-tile full">
+          <div class="agent-tile-head">
+            <div>
+              <h3 class="agent-name">Orchestrator</h3>
+              <p class="agent-sub">根据需求文本决定调用哪些生成 Agent · 低温高确定性</p>
+            </div>
+            <span class="agent-tile-icon">SYS · 00</span>
+          </div>
+          <div class="agent-meta">
+            <span>temp <strong>0.1</strong></span>
+            <span>tokens <strong>200</strong></span>
+            <span>out <strong>JSON[]</strong></span>
+            <span>fallback <strong>默认 4 个</strong></span>
+            <span>safety <strong>永不抛异常</strong></span>
+          </div>
+        </div>
+      </div>
+      <div class="code-block">
+        <div class="code-header"><span>算法步骤</span><div class="code-header-dots"><span></span><span></span><span></span></div></div>
+<span class="code-line"><span class="tok-n">1</span>. safePrompt = prompt.<span class="tok-f">slice</span>(<span class="tok-n">0</span>, <span class="tok-n">10000</span>);</span>
+<span class="code-line"><span class="tok-n">2</span>. <span class="tok-f">chat.completions.create</span>({ model, messages, temperature: <span class="tok-n">0.1</span>, max_tokens: <span class="tok-n">200</span> });</span>
+<span class="code-line"><span class="tok-n">3</span>. 正则抽取 <span class="tok-s">/\[[\s\S]*\]/</span> → <span class="tok-f">JSON.parse</span>;</span>
+<span class="code-line"><span class="tok-n">4</span>. <span class="tok-f">filter</span> 仅保留合法 AgentType;</span>
+<span class="code-line"><span class="tok-n">5</span>. 正则不匹配 / 解析失败 → 默认回退 [<span class="tok-s">"requirement"</span>, <span class="tok-s">"design"</span>, <span class="tok-s">"api"</span>, <span class="tok-s">"plan"</span>];</span>
+<span class="code-line"><span class="tok-n">6</span>. <span class="tok-k">try/catch</span> 兜底：网络异常 → 同样回退。</span>
+<span class="code-line"></span>
+<span class="code-line"><span class="tok-c">// ⚠️ 默认回退不含 "er"</span></span>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">5.4</span><span class="section-title">Conversation Agent 详细设计</span></div>
+      <div class="agent-board single">
+        <div class="agent-tile special full">
+          <div class="agent-tile-head">
+            <div>
+              <h3 class="agent-name" style="color:#fff">Conversation</h3>
+              <p class="agent-sub">自然流畅的需求澄清 · [READY] 标记触发生成</p>
+            </div>
+            <span class="agent-tile-icon">CONV · 01</span>
+          </div>
+          <div class="agent-meta">
+            <span>temp <strong>0.7</strong></span>
+            <span>tokens <strong>800</strong></span>
+            <span>stream <strong>raw fetch</strong></span>
+            <span>history <strong>20 msgs</strong></span>
+            <span>content <strong>4000 chars</strong></span>
+          </div>
+        </div>
+      </div>
+      <p class="section-body"><strong>特别说明：</strong>本 Agent 使用<strong>原生 fetch 而非 OpenAI SDK</strong>，原因是 DeepSeek 流式端点与 SDK 序列化存在兼容性问题。</p>
+      <table class="data-table">
+        <thead><tr><th>常量</th><th>值</th><th>含义</th></tr></thead>
+        <tbody>
+          <tr><td><code>MAX_HISTORY_MESSAGES</code></td><td>20</td><td>仅保留最近 20 条消息</td></tr>
+          <tr><td><code>MAX_CONTENT_LENGTH</code></td><td>4000</td><td>单条消息正文上限</td></tr>
+          <tr><td><code>[READY] 标记</code></td><td>末行</td><td>需求收敛时 Agent 主动输出，前端据此触发生成</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">5.5</span><span class="section-title">生成类 Agent 通用结构</span></div>
+      <div class="agent-board">
+        <div class="agent-tile">
+          <div class="agent-tile-head">
+            <div><h3 class="agent-name">Requirement</h3><p class="agent-sub">结构化需求分析文档</p></div>
+            <span class="agent-tile-icon">GEN · 01</span>
+          </div>
+          <div class="agent-meta"><span>temp <strong>0.3</strong></span><span>tokens <strong>3000</strong></span><span>out <strong>Markdown</strong></span></div>
+        </div>
+        <div class="agent-tile">
+          <div class="agent-tile-head">
+            <div><h3 class="agent-name">Design</h3><p class="agent-sub">系统架构 Mermaid flowchart</p></div>
+            <span class="agent-tile-icon">GEN · 02</span>
+          </div>
+          <div class="agent-meta"><span>temp <strong>0.3</strong></span><span>tokens <strong>3000</strong></span><span>out <strong>Mermaid</strong></span></div>
+        </div>
+        <div class="agent-tile">
+          <div class="agent-tile-head">
+            <div><h3 class="agent-name">ER</h3><p class="agent-sub">数据库 Mermaid erDiagram</p></div>
+            <span class="agent-tile-icon">GEN · 03</span>
+          </div>
+          <div class="agent-meta"><span>temp <strong>0.3</strong></span><span>tokens <strong>3000</strong></span><span>out <strong>Mermaid</strong></span></div>
+        </div>
+        <div class="agent-tile">
+          <div class="agent-tile-head">
+            <div><h3 class="agent-name">API</h3><p class="agent-sub">RESTful 接口规范</p></div>
+            <span class="agent-tile-icon">GEN · 04</span>
+          </div>
+          <div class="agent-meta"><span>temp <strong>0.3</strong></span><span>tokens <strong>3000</strong></span><span>out <strong>Markdown</strong></span></div>
+        </div>
+        <div class="agent-tile">
+          <div class="agent-tile-head">
+            <div><h3 class="agent-name">Plan</h3><p class="agent-sub">项目迭代计划</p></div>
+            <span class="agent-tile-icon">GEN · 05</span>
+          </div>
+          <div class="agent-meta"><span>temp <strong>0.3</strong></span><span>tokens <strong>3000</strong></span><span>out <strong>Markdown</strong></span></div>
+        </div>
+        <div class="agent-tile limits">
+          <div class="agent-tile-head">
+            <div>
+              <h3 class="agent-name">通用约束</h3>
+              <p class="agent-sub">5 个生成 Agent 共享</p>
+            </div>
+            <span class="agent-tile-icon">LIMITS</span>
+          </div>
+          <div class="limit-list">
+            <div class="limit-row"><span class="limit-key">MAX_PROMPT_LENGTH</span><span class="limit-val">10000</span></div>
+            <div class="limit-row"><span class="limit-key">MAX_CONTEXT_LENGTH</span><span class="limit-val">20000</span></div>
+            <div class="limit-row"><span class="limit-key">fail path</span><span class="limit-val">throw → outer catch</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">5.6</span><span class="section-title">Prompt 管理</span></div>
+      <p class="section-body">集中位置：<code>lib/ai/prompts.ts</code>，导出 7 个常量：<code>ORCHESTRATOR_PROMPT</code>、<code>CONVERSATION_AGENT_PROMPT</code>、<code>REQUIREMENT_AGENT_PROMPT</code>、<code>DESIGN_AGENT_PROMPT</code>、<code>ER_AGENT_PROMPT</code>、<code>API_AGENT_PROMPT</code>、<code>PLAN_AGENT_PROMPT</code>。重大调整需回归至少 3 个代表性用例。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CHAPTER 6 · 生成流水线 ============ -->
+<section class="chapter" id="ch-6" data-num="06">
+  <aside class="chapter-anchor">
+    <span class="chapter-number" data-num="06">06</span>
+    <div class="chapter-meta">Ch · 06 / 14</div>
+  </aside>
+  <div class="chapter-body">
+    <h2 class="chapter-title">生成流水线</h2>
+    <p class="chapter-lede"><code>POST /api/generate</code> 是整个系统的<em>心脏</em>——把用户一句话变成 5 份设计产物。</p>
+    <div class="section">
+      <div class="section-label"><span class="section-num">6.1</span><span class="section-title">入口</span></div>
+      <table class="data-table">
+        <tbody>
+          <tr><td>路径</td><td><code>POST /api/generate</code></td></tr>
+          <tr><td>文件</td><td><code>app/api/generate/route.ts</code></td></tr>
+          <tr><td>响应</td><td><code>text/event-stream</code> SSE 长连接</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">6.2</span><span class="section-title">请求契约</span></div>
+      <div class="code-block">
+        <div class="code-header"><span>GenerateRequest</span><div class="code-header-dots"><span></span><span></span><span></span></div></div>
+<span class="code-line"><span class="tok-k">interface</span> <span class="tok-t">GenerateRequest</span> {</span>
+<span class="code-line">  sessionId: <span class="tok-t">string</span>;       <span class="tok-c">// required</span></span>
+<span class="code-line">  prompt: <span class="tok-t">string</span>;          <span class="tok-c">// required</span></span>
+<span class="code-line">  confirmedAgents?: <span class="tok-t">AgentType</span>[]; <span class="tok-c">// 若存在则跳过 Orchestrator</span></span>
+<span class="code-line">}</span>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">6.3</span><span class="section-title">响应头</span></div>
+      <div class="code-block">
+<span class="code-line"><span class="tok-t">Content-Type</span>: text/event-stream</span>
+<span class="code-line"><span class="tok-t">Cache-Control</span>: no-cache</span>
+<span class="code-line"><span class="tok-t">Connection</span>: keep-alive</span>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">6.4</span><span class="section-title">主流程（伪代码）</span></div>
+      <div class="code-block">
+        <div class="code-header"><span>app/api/generate/route.ts · pipeline</span><div class="code-header-dots"><span></span><span></span><span></span></div></div>
+<span class="code-line"><span class="tok-n">1</span>. session = <span class="tok-k">await</span> <span class="tok-f">auth</span>(); <span class="tok-c">// 无 → 401</span></span>
+<span class="code-line"><span class="tok-n">2</span>. body = <span class="tok-k">await</span> req.<span class="tok-f">json</span>(); <span class="tok-c">// 解析失败 → 400</span></span>
+<span class="code-line"><span class="tok-n">3</span>. 校验 sessionId / prompt 必填;</span>
+<span class="code-line"><span class="tok-n">4</span>. <span class="tok-t">Promise</span>.<span class="tok-f">all</span>([<span class="tok-f">getSessionById</span>, <span class="tok-f">getUserById</span>]);</span>
+<span class="code-line"><span class="tok-n">5</span>. 归属校验 → 404 防绕过;</span>
+<span class="code-line"><span class="tok-n">6</span>. fullPrompt = user.userMd ? prompt + user.md : prompt;</span>
+<span class="code-line"><span class="tok-n">7</span>. <span class="tok-k">new</span> <span class="tok-f">ReadableStream</span>({</span>
+<span class="code-line">     <span class="tok-f">send</span>(status: <span class="tok-s">"分析需求..."</span>);</span>
+<span class="code-line">     agentsToRun = confirmedAgents ?? <span class="tok-k">await</span> <span class="tok-f">orchestrate</span>(fullPrompt);</span>
+<span class="code-line">     <span class="tok-f">send</span>(agents: agentsToRun);</span>
+<span class="code-line">     existingCtx = <span class="tok-k">await</span> <span class="tok-t">Promise</span>.<span class="tok-f">all</span>([mermaid, apiSpec]);</span>
+<span class="code-line">     <span class="tok-k">for</span> (agent of agentsToRun) <span class="tok-f">send</span>(agent_start);</span>
+<span class="code-line">     agentTasks = agents.<span class="tok-f">map</span>(<span class="tok-f">runAgent</span>);</span>
+<span class="code-line">     <span class="tok-k">await</span> <span class="tok-t">Promise</span>.<span class="tok-f">all</span>(pending.<span class="tok-f">map</span>(p =&gt; p.<span class="tok-f">then</span>(save).<span class="tok-f">catch</span>(err))); <span class="tok-c">// 各自 settle</span></span>
+<span class="code-line">     <span class="tok-f">createMessage</span>(assistant, summary, metadata);</span>
+<span class="code-line">     <span class="tok-f">send</span>(done);</span>
+<span class="code-line">   });</span>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">6.5</span><span class="section-title">SSE 事件格式</span></div>
+      <div class="sse-stream">
+        <div class="sse-event status"><span class="sse-dot" style="color:var(--info)"></span><span class="sse-type">status</span><span class="sse-payload">{ message: "分析需求..." }</span></div>
+        <div class="sse-event agents"><span class="sse-dot" style="color:#D7A67B"></span><span class="sse-type">agents</span><span class="sse-payload">{ agents: ["requirement","design","er","api","plan"] }</span></div>
+        <div class="sse-event agent_start"><span class="sse-dot" style="color:var(--accent)"></span><span class="sse-type">agent_start</span><span class="sse-payload">{ agent, label, input }</span></div>
+        <div class="sse-event agent_output"><span class="sse-dot" style="color:var(--success)"></span><span class="sse-type">agent_output</span><span class="sse-payload">{ agent, label, output: { content } }</span></div>
+        <div class="sse-event agent_error"><span class="sse-dot" style="color:var(--error)"></span><span class="sse-type">agent_error</span><span class="sse-payload">{ agent, label, errorText }</span></div>
+        <div class="sse-event doc_saved"><span class="sse-dot" style="color:#C8B191"></span><span class="sse-type">doc_saved</span><span class="sse-payload">{ agent, label }</span></div>
+        <div class="sse-event done"><span class="sse-dot" style="color:#E9C98C"></span><span class="sse-type">done</span><span class="sse-payload">{ summary, generated: string[] }</span></div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">6.6</span><span class="section-title">文档持久化映射</span></div>
+      <table class="data-table">
+        <thead><tr><th>Agent</th><th>type</th><th>diagramType</th><th>title</th></tr></thead>
+        <tbody>
+          <tr><td><code>requirement</code></td><td><code>arch_design</code></td><td>—</td><td>需求分析文档</td></tr>
+          <tr><td><code>design</code></td><td><code>mermaid</code></td><td><code>architecture</code></td><td>系统架构图</td></tr>
+          <tr><td><code>er</code></td><td><code>mermaid</code></td><td><code>er</code></td><td>ER 图</td></tr>
+          <tr><td><code>api</code></td><td><code>api_spec</code></td><td>—</td><td>API 接口规范</td></tr>
+          <tr><td><code>plan</code></td><td><code>dev_plan</code></td><td>—</td><td>发展计划</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">6.7</span><span class="section-title">助手消息 metadata 结构</span></div>
+      <div class="code-block">
+<span class="code-line"><span class="tok-k">interface</span> <span class="tok-t">AssistantMessageMetadata</span> {</span>
+<span class="code-line">  agents: <span class="tok-t">AgentType</span>[];</span>
+<span class="code-line">  generatedTypes: <span class="tok-t">string</span>[]; <span class="tok-c">// "架构图" / "ER 图" / ...</span></span>
+<span class="code-line">  steps: <span class="tok-t">PersistedAgentStep</span>[];</span>
+<span class="code-line">  tools: <span class="tok-t">PersistedAgentTool</span>[];</span>
+<span class="code-line">}</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CHAPTER 7 · 数据访问层 ============ -->
+<section class="chapter" id="ch-7" data-num="07">
+  <aside class="chapter-anchor">
+    <span class="chapter-number" data-num="07">07</span>
+    <div class="chapter-meta">Ch · 07 / 14</div>
+  </aside>
+  <div class="chapter-body">
+    <h2 class="chapter-title">数据访问层</h2>
+    <p class="chapter-lede">5 个 Query 文件，<em>一个领域一个文件</em>，每个函数都强制以 userId 或 sessionId 过滤。</p>
+    <div class="section">
+      <div class="section-label"><span class="section-num">7.1</span><span class="section-title">设计原则</span></div>
+      <div class="card-grid">
+        <div class="mini-card"><span class="mini-card-index">01</span><div><div class="mini-card-title">全部查询以 userId / sessionId 过滤</div><div class="mini-card-desc">禁止写无过滤的 SELECT *</div></div></div>
+        <div class="mini-card"><span class="mini-card-index">02</span><div><div class="mini-card-title">返回类型从 Drizzle Schema 推导</div><div class="mini-card-desc">避免手写 DTO</div></div></div>
+        <div class="mini-card"><span class="mini-card-index">03</span><div><div class="mini-card-title">仅暴露必要函数</div><div class="mini-card-desc">复杂组合由路由层完成</div></div></div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">7.2</span><span class="section-title">users</span></div>
+      <div class="code-block">
+        <div class="code-header"><span>lib/db/queries/users.ts</span><div class="code-header-dots"><span></span><span></span><span></span></div></div>
+<span class="code-line"><span class="tok-f">getUserById</span>(id): <span class="tok-t">Promise</span>&lt;<span class="tok-t">User</span> | <span class="tok-k">null</span>&gt;</span>
+<span class="code-line"><span class="tok-f">getUserByEmail</span>(email): <span class="tok-t">Promise</span>&lt;<span class="tok-t">User</span> | <span class="tok-k">null</span>&gt;</span>
+<span class="code-line"><span class="tok-f">updateUserMd</span>(id, userMd): <span class="tok-t">Promise</span>&lt;<span class="tok-t">User</span>&gt;</span>
+<span class="code-line"><span class="tok-f">updatePreferences</span>(id, preferences): <span class="tok-t">Promise</span>&lt;<span class="tok-t">User</span>&gt;</span>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">7.3</span><span class="section-title">sessions</span></div>
+      <div class="code-block">
+        <div class="code-header"><span>lib/db/queries/sessions.ts</span><div class="code-header-dots"><span></span><span></span><span></span></div></div>
+<span class="code-line"><span class="tok-f">getUserSessions</span>(userId): <span class="tok-t">Promise</span>&lt;<span class="tok-t">Session</span>[]&gt;</span>
+<span class="code-line"><span class="tok-f">getSessionById</span>(id): <span class="tok-t">Promise</span>&lt;<span class="tok-t">Session</span> | <span class="tok-k">null</span>&gt;</span>
+<span class="code-line"><span class="tok-f">createSession</span> · <span class="tok-f">updateSession</span> · <span class="tok-f">deleteSession</span></span>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">7.4</span><span class="section-title">documents · Append-Only 核心</span></div>
+      <div class="code-block">
+        <div class="code-header"><span>lib/db/queries/documents.ts · createDocument 算法</span><div class="code-header-dots"><span></span><span></span><span></span></div></div>
+<span class="code-line"><span class="tok-n">1</span>. latest = <span class="tok-k">await</span> <span class="tok-f">getLatestDocument</span>(sessionId, type, diagramType);</span>
+<span class="code-line"><span class="tok-n">2</span>. newVersion = latest ? latest.version + <span class="tok-n">1</span> : <span class="tok-n">1</span>;</span>
+<span class="code-line"><span class="tok-n">3</span>. parentVersionId = latest?.id ?? <span class="tok-k">null</span>;</span>
+<span class="code-line"><span class="tok-n">4</span>. db.<span class="tok-f">insert</span>(documents).<span class="tok-f">values</span>({ ...data, version, parentVersionId }).<span class="tok-f">returning</span>();</span>
+<span class="code-line"></span>
+<span class="code-line"><span class="tok-c">// ⚠️ 并发注意：同 (sessionId, type, diagramType) 并发写入可能重复 version</span></span>
+<span class="code-line"><span class="tok-c">// 当前版本依赖应用层顺序性，不强制 DB 唯一约束</span></span>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">7.5</span><span class="section-title">messages</span></div>
+      <div class="code-block">
+<span class="code-line"><span class="tok-f">getSessionMessages</span>(sessionId, limit?): <span class="tok-t">Promise</span>&lt;<span class="tok-t">Message</span>[]&gt;</span>
+<span class="code-line"><span class="tok-f">createMessage</span>({ sessionId, role, content, metadata? }): <span class="tok-t">Promise</span>&lt;<span class="tok-t">Message</span>&gt;</span>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">7.6</span><span class="section-title">templates</span></div>
+      <div class="code-block">
+<span class="code-line"><span class="tok-f">getAllTemplates</span>(): <span class="tok-t">Promise</span>&lt;<span class="tok-t">Template</span>[]&gt;</span>
+<span class="code-line"><span class="tok-f">getTemplateById</span>(id): <span class="tok-t">Promise</span>&lt;<span class="tok-t">Template</span> | <span class="tok-k">null</span>&gt;</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CHAPTER 8 · SSE 事件协议 ============ -->
+<section class="chapter" id="ch-8" data-num="08">
+  <aside class="chapter-anchor">
+    <span class="chapter-number" data-num="08">08</span>
+    <div class="chapter-meta">Ch · 08 / 14</div>
+  </aside>
+  <div class="chapter-body">
+    <h2 class="chapter-title">SSE 事件协议</h2>
+    <p class="chapter-lede">单向流式推送，<em>不使用 EventSource</em>——因为需要 POST body 和自定义 headers。</p>
+    <div class="section">
+      <div class="section-label"><span class="section-num">8.1</span><span class="section-title">协议版本</span></div>
+      <p class="section-body">v1，随 <code>/api/generate</code> 部署，无独立版本号。未来破坏性变更应在载荷中加入 <code>version</code> 字段。</p>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">8.2</span><span class="section-title">连接建立</span></div>
+      <p class="section-body">前端通过 <code>fetch</code> 发起 POST，以 <code>ReadableStream</code> 读取响应体，手动按 <code>\n\n</code> 分帧。</p>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">8.3</span><span class="section-title">帧格式</span></div>
+      <div class="code-block">
+<span class="code-line">data: {<span class="tok-s">"type"</span>:<span class="tok-s">"..."</span>,<span class="tok-s">"..."</span>:<span class="tok-s">"..."</span>}\n\n</span>
+<span class="code-line"></span>
+<span class="code-line"><span class="tok-c">// ⚠️ 不使用 event: 行 —— 所有事件类型通过 JSON 内 type 字段区分</span></span>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">8.4</span><span class="section-title">心跳与超时</span></div>
+      <p class="section-body">当前版本<strong>不发送</strong>心跳。Vercel Serverless 最大持续 60s（Pro 300s），Agent 通常 10–40s 完成。未来如需更长生成：每 15s 发 <code>type: "ping"</code>，前端忽略。</p>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">8.5</span><span class="section-title">取消机制</span></div>
+      <p class="section-body">前端使用 <code>AbortController.signal</code> 传入 <code>fetch</code>；用户离开或主动取消时 <code>abort()</code>，后端 <code>ReadableStream</code> 的 <code>controller</code> 自动关闭。</p>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">8.6</span><span class="section-title">事件顺序约束</span></div>
+      <div class="code-block">
+<span class="code-line">status        (可多次)</span>
+<span class="code-line"> <span class="tok-k">→</span> agents       (恰好 1 次)</span>
+<span class="code-line"> <span class="tok-k">→</span> agent_start  <span class="tok-k">×</span> N</span>
+<span class="code-line"> <span class="tok-k">→</span> status       (并行运行 N 个 Agent...)</span>
+<span class="code-line"> <span class="tok-k">→</span> 并行：[agent_output | agent_error] <span class="tok-k">×</span> N</span>
+<span class="code-line">   └ agent_output 紧跟 doc_saved</span>
+<span class="code-line"> <span class="tok-k">→</span> done  (或 error)</span>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">8.7</span><span class="section-title">前端状态机映射</span></div>
+      <table class="data-table">
+        <thead><tr><th>SSE type</th><th>Store 字段更新</th></tr></thead>
+        <tbody>
+          <tr><td><code>status</code></td><td>streamSteps.push({ label, status: "done" })</td></tr>
+          <tr><td><code>agent_start</code></td><td>agentToolParts.set({ state: "input-streaming", input })</td></tr>
+          <tr><td><code>agent_output</code></td><td>agentToolParts.set({ state: "output-available", output })</td></tr>
+          <tr><td><code>agent_error</code></td><td>agentToolParts.set({ state: "output-error", errorText })</td></tr>
+          <tr><td><code>doc_saved</code></td><td>completedDocs.push(label)</td></tr>
+          <tr><td><code>error</code></td><td>status = "error"; errorMessage = error</td></tr>
+          <tr><td><code>done</code></td><td>由 reader 循环自然结束时置 completed</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CHAPTER 9 · 前端状态管理 ============ -->
+<section class="chapter" id="ch-9" data-num="09">
+  <aside class="chapter-anchor">
+    <span class="chapter-number" data-num="09">09</span>
+    <div class="chapter-meta">Ch · 09 / 14</div>
+  </aside>
+  <div class="chapter-body">
+    <h2 class="chapter-title">前端状态管理</h2>
+    <p class="chapter-lede">SSE reader 在 Store 闭包中 <em>fire-and-forget</em> 运行，脱离任何组件生命周期。</p>
+    <div class="section">
+      <div class="section-label"><span class="section-num">9.1</span><span class="section-title">generation-store · 核心设计</span></div>
+      <p class="section-body">组件订阅 Store 只读取状态；即使组件 unmount，reader 继续消费并更新 Store。</p>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">9.2</span><span class="section-title">数据结构</span></div>
+      <div class="code-block">
+        <div class="code-header"><span>stores/generation-store.ts</span><div class="code-header-dots"><span></span><span></span><span></span></div></div>
+<span class="code-line"><span class="tok-k">interface</span> <span class="tok-t">GenerationRun</span> {</span>
+<span class="code-line">  sessionId: <span class="tok-t">string</span>;</span>
+<span class="code-line">  sessionTitle: <span class="tok-t">string</span>;</span>
+<span class="code-line">  status: <span class="tok-s">"running"</span> | <span class="tok-s">"completed"</span> | <span class="tok-s">"error"</span>;</span>
+<span class="code-line">  streamSteps: <span class="tok-t">StreamStep</span>[];                  <span class="tok-c">// 宏观步骤</span></span>
+<span class="code-line">  agentToolParts: <span class="tok-t">Map</span>&lt;<span class="tok-t">string</span>, <span class="tok-t">AgentToolPart</span>&gt;; <span class="tok-c">// 按 agent 键</span></span>
+<span class="code-line">  completedDocs: <span class="tok-t">string</span>[];                    <span class="tok-c">// 完成文档标签</span></span>
+<span class="code-line">  errorMessage?: <span class="tok-t">string</span>;</span>
+<span class="code-line">  abortController: <span class="tok-t">AbortController</span> | <span class="tok-k">null</span>;</span>
+<span class="code-line">}</span>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">9.3</span><span class="section-title">startGeneration 算法</span></div>
+      <div class="code-block">
+<span class="code-line"><span class="tok-n">1</span>. 同 sessionId 已有运行 → <span class="tok-f">abort</span>() 旧任务;</span>
+<span class="code-line"><span class="tok-n">2</span>. <span class="tok-k">new</span> <span class="tok-t">AbortController</span>, <span class="tok-k">new</span> GenerationRun → runs.<span class="tok-f">set</span>();</span>
+<span class="code-line"><span class="tok-n">3</span>. IIFE 异步任务:</span>
+<span class="code-line">     res = <span class="tok-k">await</span> <span class="tok-f">fetch</span>(<span class="tok-s">"/api/generate"</span>, { signal });</span>
+<span class="code-line">     reader = res.body.<span class="tok-f">getReader</span>();</span>
+<span class="code-line">     <span class="tok-k">loop</span>:</span>
+<span class="code-line">       { done, value } = <span class="tok-k">await</span> reader.<span class="tok-f">read</span>();</span>
+<span class="code-line">       buffer += decoder.<span class="tok-f">decode</span>(value, stream: <span class="tok-k">true</span>);</span>
+<span class="code-line">       lines = buffer.<span class="tok-f">split</span>(<span class="tok-s">"\n\n"</span>);</span>
+<span class="code-line">       buffer = lines.<span class="tok-f">pop</span>();</span>
+<span class="code-line">       <span class="tok-k">for</span> (line): <span class="tok-f">JSON.parse</span> → <span class="tok-f">handleSSEEvent</span>;</span>
+<span class="code-line"><span class="tok-n">4</span>. <span class="tok-k">catch</span>: signal.aborted ? 静默 : status = <span class="tok-s">"error"</span>;</span>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">9.4</span><span class="section-title">cancelGeneration</span></div>
+      <p class="section-body">调用 <code>abortController.abort()</code>，从 <code>runs</code> Map 移除该 run。</p>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">9.5</span><span class="section-title">clearGeneration</span></div>
+      <p class="section-body">不中断（假设已完成或失败），仅从 Map 移除。</p>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">9.6</span><span class="section-title">workspace-store</span></div>
+      <div class="code-block">
+<span class="code-line"><span class="tok-k">interface</span> <span class="tok-t">WorkspaceStore</span> {</span>
+<span class="code-line">  activeTab: <span class="tok-s">"architecture"</span> | <span class="tok-s">"er"</span> | <span class="tok-s">"requirement"</span> | <span class="tok-s">"api"</span> | <span class="tok-s">"plan"</span>;</span>
+<span class="code-line">  viewMode: <span class="tok-s">"chat"</span> | <span class="tok-s">"preview"</span> | <span class="tok-s">"split"</span>;</span>
+<span class="code-line">  setActiveTab(tab); setViewMode(mode);</span>
+<span class="code-line">}</span>
+<span class="code-line"></span>
+<span class="code-line"><span class="tok-c">// 纯 UI 状态，无副作用</span></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CHAPTER 10 · 版本管理 ============ -->
+<section class="chapter" id="ch-10" data-num="10">
+  <aside class="chapter-anchor">
+    <span class="chapter-number" data-num="10">10</span>
+    <div class="chapter-meta">Ch · 10 / 14</div>
+  </aside>
+  <div class="chapter-body">
+    <h2 class="chapter-title">版本管理</h2>
+    <p class="chapter-lede"><em>Append-Only</em>——Document 行一经写入，content 字段永不 UPDATE。</p>
+    <div class="section">
+      <div class="section-label"><span class="section-num">10.1</span><span class="section-title">Append-Only 策略</span></div>
+      <p class="section-body"><strong>不变式：</strong>任何产物都是新增 Document，通过 <code>createDocument</code> 自动递增 version + 设置 parentVersionId。</p>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">10.2</span><span class="section-title">版本链结构</span></div>
+      <div class="version-chain">
+        <div class="version-node"><span class="v-num">v1</span><span class="v-meta">parent: null</span></div>
+        <div class="version-link"></div>
+        <div class="version-node"><span class="v-num">v2</span><span class="v-meta">parent: v1.id</span></div>
+        <div class="version-link"></div>
+        <div class="version-node latest"><span class="v-num">v3</span><span class="v-meta" style="color:rgba(255,255,255,0.8)">parent: v2.id · LATEST</span></div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">10.3</span><span class="section-title">分组键</span></div>
+      <table class="data-table">
+        <thead><tr><th>分组键 (type, diagramType)</th><th>产物</th></tr></thead>
+        <tbody>
+          <tr><td><code>("mermaid", "architecture")</code></td><td>架构图</td></tr>
+          <tr><td><code>("mermaid", "er")</code></td><td>ER 图</td></tr>
+          <tr><td><code>("arch_design", null)</code></td><td>需求分析</td></tr>
+          <tr><td><code>("api_spec", null)</code></td><td>API 规范</td></tr>
+          <tr><td><code>("dev_plan", null)</code></td><td>发展计划</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">10.4</span><span class="section-title">展示查询</span></div>
+      <p class="section-body">前端 <code>GET /api/sessions/[id]/documents</code>，按 <code>createdAt desc</code> 返回全部；前端按分组键聚合，取最大 <code>version</code> 默认展示。</p>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">10.5</span><span class="section-title">回滚策略（v2 预留）</span></div>
+      <div class="code-block">
+<span class="code-line"><span class="tok-c">// TODO v2</span></span>
+<span class="code-line">POST /api/sessions/:id/documents/:docId/revert</span>
+<span class="code-line"></span>
+<span class="code-line"><span class="tok-c">// 语义：基于历史版本内容创建新版本，而非真正回滚数据</span></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CHAPTER 11 · 错误处理 ============ -->
+<section class="chapter" id="ch-11" data-num="11">
+  <aside class="chapter-anchor">
+    <span class="chapter-number" data-num="11">11</span>
+    <div class="chapter-meta">Ch · 11 / 14</div>
+  </aside>
+  <div class="chapter-body">
+    <h2 class="chapter-title">错误处理与异常</h2>
+    <p class="chapter-lede">HTTP 码用到位，<em>不向外泄漏内部差异</em>——"不存在"与"无权"统一 404。</p>
+    <div class="section">
+      <div class="section-label"><span class="section-num">11.1</span><span class="section-title">HTTP 错误码规范</span></div>
+      <div class="status-grid">
+        <div class="status-cell s"><div class="code">200</div><div class="label">成功</div></div>
+        <div class="status-cell s"><div class="code">201</div><div class="label">已创建</div></div>
+        <div class="status-cell e"><div class="code">400</div><div class="label">客户端参数错误</div></div>
+        <div class="status-cell e"><div class="code">401</div><div class="label">未认证</div></div>
+        <div class="status-cell e"><div class="code">404</div><div class="label">资源不存在 / 无权</div></div>
+        <div class="status-cell e"><div class="code">409</div><div class="label">资源冲突（邮箱已注册）</div></div>
+        <div class="status-cell e"><div class="code">500</div><div class="label">服务器错误</div></div>
+        <div class="status-cell"><div class="code" style="color:var(--text-muted)">403</div><div class="label">未使用</div></div>
+        <div class="status-cell"><div class="code" style="color:var(--text-muted)">—</div><div class="label">统一响应体</div></div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">11.2</span><span class="section-title">响应体规范</span></div>
+      <div class="code-block">
+<span class="code-line"><span class="tok-c">// 错误统一结构</span></span>
+<span class="code-line">{ <span class="tok-s">"error"</span>: <span class="tok-s">"&lt;中文或英文错误信息&gt;"</span> }</span>
+<span class="code-line"></span>
+<span class="code-line"><span class="tok-c">// 成功响应直接返回业务对象</span></span>
+<span class="code-line"><span class="tok-c">// 不使用 { data, error } 包装</span></span>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">11.3</span><span class="section-title">Agent 层异常语义</span></div>
+      <div class="card-grid">
+        <div class="mini-card"><span class="mini-card-index">01</span><div><div class="mini-card-title">Orchestrator</div><div class="mini-card-desc">任何异常 → 回退默认组合，永不抛</div></div></div>
+        <div class="mini-card"><span class="mini-card-index">02</span><div><div class="mini-card-title">Conversation Agent</div><div class="mini-card-desc">response.ok === false → 抛 Error("&lt;status&gt; &lt;body&gt;")，由路由层转 500</div></div></div>
+        <div class="mini-card"><span class="mini-card-index">03</span><div><div class="mini-card-title">生成类 Agent</div><div class="mini-card-desc">异常 → 抛业务化错误，路由层捕获为 agent_error SSE（不中断其他）</div></div></div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">11.4</span><span class="section-title">前端容错表现</span></div>
+      <table class="data-table">
+        <thead><tr><th>错误类型</th><th>表现</th></tr></thead>
+        <tbody>
+          <tr><td>网络中断</td><td>Toast「网络错误」· status = error</td></tr>
+          <tr><td><code>agent_error</code></td><td>对应 Agent 卡片显示红色边框；其他 Agent 继续展示</td></tr>
+          <tr><td>顶层 <code>error</code></td><td>全屏 Toast 失败 · streamSteps 追加错误步骤</td></tr>
+          <tr><td>SSE 中途关闭</td><td>status 仍 running 时强制置 completed</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">11.5</span><span class="section-title">日志</span></div>
+      <p class="section-body">服务端错误 <code>console.error(...)</code>（Vercel Logs 自动收集）。<strong>禁止输出</strong>密码、Token、用户 <code>userMd</code> 全文等敏感数据。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CHAPTER 12 · 数据字典 ============ -->
+<section class="chapter" id="ch-12" data-num="12">
+  <aside class="chapter-anchor">
+    <span class="chapter-number" data-num="12">12</span>
+    <div class="chapter-meta">Ch · 12 / 14</div>
+  </aside>
+  <div class="chapter-body">
+    <h2 class="chapter-title">数据字典</h2>
+    <p class="chapter-lede">所有<em>枚举、常量、环境变量、路径</em>集中在这一章。</p>
+    <div class="section">
+      <div class="section-label"><span class="section-num">12.1</span><span class="section-title">枚举值</span></div>
+      <div class="code-block">
+<span class="code-line"><span class="tok-t">DocumentType</span> = <span class="tok-s">"mermaid"</span> | <span class="tok-s">"api_spec"</span> | <span class="tok-s">"arch_design"</span> | <span class="tok-s">"dev_plan"</span> | <span class="tok-s">"markdown"</span></span>
+<span class="code-line"><span class="tok-t">DiagramType</span>  = <span class="tok-s">"architecture"</span> | <span class="tok-s">"er"</span> | <span class="tok-s">"flow"</span> | <span class="tok-s">"sequence"</span> | <span class="tok-s">"class"</span> | <span class="tok-s">"other"</span></span>
+<span class="code-line"><span class="tok-t">SessionStatus</span> = <span class="tok-s">"active"</span> | <span class="tok-s">"archived"</span> | <span class="tok-s">"completed"</span></span>
+<span class="code-line"><span class="tok-t">MessageRole</span>  = <span class="tok-s">"user"</span> | <span class="tok-s">"assistant"</span> | <span class="tok-s">"system"</span></span>
+<span class="code-line"><span class="tok-t">AgentType</span>    = <span class="tok-s">"requirement"</span> | <span class="tok-s">"design"</span> | <span class="tok-s">"er"</span> | <span class="tok-s">"api"</span> | <span class="tok-s">"plan"</span></span>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">12.2</span><span class="section-title">关键常量</span></div>
+      <table class="data-table">
+        <thead><tr><th>常量</th><th>值</th><th>位置</th><th>用途</th></tr></thead>
+        <tbody>
+          <tr><td><code>AI_MODEL</code></td><td>"deepseek-chat"</td><td>lib/ai/index.ts</td><td>统一模型标识</td></tr>
+          <tr><td><code>MAX_PROMPT_LENGTH</code></td><td>10000</td><td>各生成 Agent</td><td>用户需求截断</td></tr>
+          <tr><td><code>MAX_CONTEXT_LENGTH</code></td><td>20000</td><td>各生成 Agent</td><td>上下文截断</td></tr>
+          <tr><td><code>MAX_HISTORY_MESSAGES</code></td><td>20</td><td>Conversation</td><td>对话窗口</td></tr>
+          <tr><td><code>MAX_CONTENT_LENGTH</code></td><td>4000</td><td>Conversation</td><td>单条截断</td></tr>
+          <tr><td>Orchestrator 默认</td><td>4 Agents (无 er)</td><td>orchestrator.ts</td><td>回退组合</td></tr>
+          <tr><td>bcrypt saltRounds</td><td>10</td><td>注册</td><td>密码哈希强度</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">12.3</span><span class="section-title">环境变量</span></div>
+      <div class="card-grid">
+        <div class="mini-card"><span class="mini-card-index">!</span><div><div class="mini-card-title">DATABASE_URL</div><div class="mini-card-desc">必需 · Neon PG 连接串</div></div></div>
+        <div class="mini-card"><span class="mini-card-index">!</span><div><div class="mini-card-title">NEXTAUTH_SECRET</div><div class="mini-card-desc">必需 · JWT 签名密钥</div></div></div>
+        <div class="mini-card"><span class="mini-card-index">!</span><div><div class="mini-card-title">DEEPSEEK_API_KEY</div><div class="mini-card-desc">必需 · DeepSeek API 凭证</div></div></div>
+        <div class="mini-card"><span class="mini-card-index">?</span><div><div class="mini-card-title">GITHUB_CLIENT_ID / SECRET</div><div class="mini-card-desc">可选 · GitHub OAuth</div></div></div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">12.4</span><span class="section-title">API 路径索引</span></div>
+      <table class="data-table">
+        <tbody>
+          <tr><td>认证</td><td><code>/api/auth/[...nextauth]</code></td></tr>
+          <tr><td>注册</td><td><code>/api/register</code></td></tr>
+          <tr><td>用户</td><td><code>/api/user</code></td></tr>
+          <tr><td>会话集合</td><td><code>/api/sessions</code></td></tr>
+          <tr><td>会话详情</td><td><code>/api/sessions/[id]</code></td></tr>
+          <tr><td>消息</td><td><code>/api/sessions/[id]/messages</code></td></tr>
+          <tr><td>文档</td><td><code>/api/sessions/[id]/documents</code></td></tr>
+          <tr><td>对话</td><td><code>/api/sessions/[id]/chat</code></td></tr>
+          <tr><td>生成</td><td><code>/api/generate</code></td></tr>
+          <tr><td>编排</td><td><code>/api/orchestrate</code></td></tr>
+          <tr><td>模板</td><td><code>/api/templates</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CHAPTER 13 · 性能容量 ============ -->
+<section class="chapter" id="ch-13" data-num="13">
+  <aside class="chapter-anchor">
+    <span class="chapter-number" data-num="13">13</span>
+    <div class="chapter-meta">Ch · 13 / 14</div>
+  </aside>
+  <div class="chapter-body">
+    <h2 class="chapter-title">性能与容量</h2>
+    <p class="chapter-lede">性能目标<em>紧贴 DeepSeek 响应速度</em>，并发由 Promise.all 保证。</p>
+    <div class="section">
+      <div class="section-label"><span class="section-num">13.1</span><span class="section-title">单次生成性能目标</span></div>
+      <div class="status-grid">
+        <div class="status-cell"><div class="code">&lt;2s</div><div class="label">Orchestrator 延迟</div></div>
+        <div class="status-cell"><div class="code">5-30s</div><div class="label">单 Agent 延迟</div></div>
+        <div class="status-cell s"><div class="code">=max</div><div class="label">并行总延迟</div></div>
+        <div class="status-cell"><div class="code">&lt;500ms</div><div class="label">SSE 首帧</div></div>
+        <div class="status-cell s"><div class="code">≥95%</div><div class="label">端到端成功率</div></div>
+        <div class="status-cell"><div class="code">Promise.all</div><div class="label">并发模型</div></div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">13.2</span><span class="section-title">数据规模限制</span></div>
+      <table class="data-table">
+        <thead><tr><th>对象</th><th>上限</th><th>失败策略</th></tr></thead>
+        <tbody>
+          <tr><td>用户需求 prompt</td><td>10000 字符</td><td>静默截断</td></tr>
+          <tr><td>既有文档上下文</td><td>20000 字符</td><td>静默截断</td></tr>
+          <tr><td>对话历史窗口</td><td>20 条</td><td>取最近 20 条</td></tr>
+          <tr><td>单条消息</td><td>4000 字符</td><td>静默截断</td></tr>
+          <tr><td>Agent 输出</td><td>3000 tokens</td><td>DeepSeek 截断</td></tr>
+          <tr><td>Orchestrator 输出</td><td>200 tokens</td><td>DeepSeek 截断</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">13.3</span><span class="section-title">数据库容量</span></div>
+      <p class="section-body">Neon Free/Hobby <strong>3GB</strong> 存储；documents 表最大增长，经验每 Session 约 5-15 行。估算：10000 用户 × 10 Session × 10 Document ≈ <strong>100 万行</strong>，远低于 Postgres 单表推荐（亿级）。</p>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">13.4</span><span class="section-title">限流策略（未实现）</span></div>
+      <p class="section-body">当前<strong>未实现</strong>应用层限流。未来建议：按 <code>userId</code> 滑动窗口（每分钟 ≤ 5 次 <code>/api/generate</code>）+ 网关层按 IP 粗粒度限流。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CHAPTER 14 · 附录 ============ -->
+<section class="chapter" id="ch-14" data-num="14">
+  <aside class="chapter-anchor">
+    <span class="chapter-number" data-num="14">14</span>
+    <div class="chapter-meta">Ch · 14 / 14</div>
+  </aside>
+  <div class="chapter-body">
+    <h2 class="chapter-title">附录</h2>
+    <p class="chapter-lede">关键文件、与概设差异、修订记录——<em>全文的目录索引</em>。</p>
+    <div class="section">
+      <div class="section-label"><span class="section-num">14.1</span><span class="section-title">关键文件清单</span></div>
+      <div class="code-block">
+<span class="code-line">app/api/generate/route.ts            <span class="tok-c">← 流水线主体 (~240 行)</span></span>
+<span class="code-line">app/api/orchestrate/route.ts         <span class="tok-c">← 编排路由 (~44 行)</span></span>
+<span class="code-line">app/api/sessions/route.ts            <span class="tok-c">← Session 集合</span></span>
+<span class="code-line">app/api/sessions/[id]/route.ts       <span class="tok-c">← Session 详情</span></span>
+<span class="code-line">app/api/sessions/[id]/messages/..    <span class="tok-c">← 消息</span></span>
+<span class="code-line">app/api/sessions/[id]/documents/..   <span class="tok-c">← 文档</span></span>
+<span class="code-line">app/api/sessions/[id]/chat/..        <span class="tok-c">← Conversation 端点</span></span>
+<span class="code-line">app/api/user/route.ts                <span class="tok-c">← 用户画像</span></span>
+<span class="code-line">app/api/register/route.ts            <span class="tok-c">← 邮箱注册</span></span>
+<span class="code-line">app/api/templates/route.ts           <span class="tok-c">← 模板库</span></span>
+<span class="code-line">lib/auth/index.ts                    <span class="tok-c">← NextAuth 配置</span></span>
+<span class="code-line">lib/db/schema.ts                     <span class="tok-c">← Drizzle Schema</span></span>
+<span class="code-line">lib/db/queries/*.ts                  <span class="tok-c">← 5 个 Query 文件</span></span>
+<span class="code-line">lib/ai/agents/*.ts                   <span class="tok-c">← 7 个 Agent</span></span>
+<span class="code-line">lib/ai/prompts.ts                    <span class="tok-c">← Prompt 常量</span></span>
+<span class="code-line">lib/ai/agent-meta.ts                 <span class="tok-c">← AGENT_LABELS</span></span>
+<span class="code-line">lib/ai/index.ts                      <span class="tok-c">← OpenAI SDK 初始化</span></span>
+<span class="code-line">stores/generation-store.ts           <span class="tok-c">← 生成状态 Store</span></span>
+<span class="code-line">stores/workspace-store.ts            <span class="tok-c">← UI 状态 Store</span></span>
+<span class="code-line">middleware.ts                        <span class="tok-c">← 路由保护</span></span>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">14.2</span><span class="section-title">与概设差异说明</span></div>
+      <table class="data-table">
+        <thead><tr><th>条目</th><th>概要设计</th><th>详细设计（本文）</th></tr></thead>
+        <tbody>
+          <tr><td>Agent 参数</td><td>参数表格</td><td>常量 + 截断长度 + 回退策略</td></tr>
+          <tr><td>SSE 协议</td><td>事件类型列表</td><td>顺序约束 + 前端状态机映射 + 不使用 event:</td></tr>
+          <tr><td>Orchestrator 回退</td><td>"默认组合"</td><td>明确 4 个 Agent（不含 er）</td></tr>
+          <tr><td>Conversation Agent</td><td>流式对话</td><td>明确使用<strong>原生 fetch</strong></td></tr>
+          <tr><td>版本管理</td><td>Append-Only 概念</td><td>算法步骤 + 分组键 + 并发说明</td></tr>
+          <tr><td>错误码</td><td>概念性</td><td>完整 HTTP 码表 + 响应体规范</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="section">
+      <div class="section-label"><span class="section-num">14.3</span><span class="section-title">修订记录</span></div>
+      <table class="data-table">
+        <thead><tr><th>版本</th><th>日期</th><th>变更</th><th>作者</th></tr></thead>
+        <tbody>
+          <tr><td><span class="pill accent">v1.0</span></td><td>2026-04-15</td><td>初版</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer class="doc-footer">
+  <h3 class="footer-title"><em>文档</em>结束</h3>
+  <p>详细设计说明书 v1.0 · 配套《概要设计说明书》v1.0 使用</p>
+  <div class="footer-meta">
+    <span>CycleMind / AI-SDLC</span>
+    <span>·</span>
+    <span>2026-04-15</span>
+    <span>·</span>
+    <span>14 章 · 793 行 · 0 空行</span>
+  </div>
+</footer>
+
+</div>
+
+<script>
+gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
+
+/* ===== Hero 数字递增 ===== */
+document.querySelectorAll('.stat-number').forEach((el) => {
+  const target = parseInt(el.dataset.target, 10);
+  const obj = { val: 0 };
+  gsap.to(obj, {
+    val: target,
+    duration: 2.2,
+    ease: 'power3.out',
+    scrollTrigger: { trigger: el, start: 'top 85%' },
+    onUpdate() {
+      el.textContent = Math.round(obj.val);
+    },
+  });
+});
+
+/* ===== Hero 入场 ===== */
+const heroTl = gsap.timeline({ delay: 0.3 });
+heroTl
+  .from('.hero-eyebrow', { y: 20, opacity: 0, duration: 0.6, ease: 'power2.out' })
+  .from('.hero-title', { y: 40, opacity: 0, duration: 0.9, ease: 'power3.out' }, '-=0.3')
+  .from('.hero-subtitle', { y: 24, opacity: 0, duration: 0.7, ease: 'power2.out' }, '-=0.5')
+  .from('.hero-meta-item', { y: 16, opacity: 0, duration: 0.5, stagger: 0.08, ease: 'power2.out' }, '-=0.3')
+  .from('.stat-card', { y: 30, opacity: 0, duration: 0.6, stagger: 0.1, ease: 'back.out(1.2)' }, '-=0.8');
+
+/* ===== Progress Bar ===== */
+ScrollTrigger.create({
+  start: 0, end: 'max',
+  onUpdate(self) {
+    document.getElementById('progress').style.width = (self.progress * 100) + '%';
+  },
+});
+
+/* ===== Nav 章节指示 ===== */
+const navNum = document.getElementById('nav-num');
+document.querySelectorAll('.chapter').forEach((ch) => {
+  ScrollTrigger.create({
+    trigger: ch,
+    start: 'top 60%',
+    end: 'bottom 40%',
+    onEnter: () => (navNum.textContent = ch.dataset.num),
+    onEnterBack: () => (navNum.textContent = ch.dataset.num),
+  });
+});
+ScrollTrigger.create({
+  trigger: '#hero',
+  start: 'top 60%',
+  end: 'bottom 40%',
+  onEnter: () => (navNum.textContent = '00'),
+  onEnterBack: () => (navNum.textContent = '00'),
+});
+
+/* ===== 章节标题 + lede 入场 ===== */
+gsap.utils.toArray('.chapter').forEach((ch) => {
+  const title = ch.querySelector('.chapter-title');
+  const lede = ch.querySelector('.chapter-lede');
+  gsap.from([title, lede], {
+    y: 30,
+    opacity: 0,
+    duration: 0.8,
+    stagger: 0.12,
+    ease: 'power3.out',
+    scrollTrigger: { trigger: title, start: 'top 75%' },
+  });
+});
+
+/* ===== 章节大数字平行滚动 ===== */
+gsap.utils.toArray('.chapter-number').forEach((num) => {
+  gsap.fromTo(
+    num,
+    { y: 0, opacity: 0.95 },
+    {
+      y: -80,
+      opacity: 0.4,
+      ease: 'none',
+      scrollTrigger: {
+        trigger: num.closest('.chapter'),
+        start: 'top top',
+        end: 'bottom top',
+        scrub: 1,
+      },
+    }
+  );
+});
+
+/* ===== 每个 section 进场：from() 保证最终可见 ===== */
+gsap.utils.toArray('.section').forEach((sec) => {
+  gsap.from(sec, {
+    opacity: 0,
+    y: 24,
+    duration: 0.8,
+    ease: 'power2.out',
+    scrollTrigger: {
+      trigger: sec,
+      start: 'top 88%',
+    },
+  });
+});
+
+/* ===== 信息内容类元素：不加入场动画，避免 GSAP 卡在 opacity:0 =====
+ * 涉及：mini-card / data-table tr / code-line / agent-tile /
+ *       flow-node / sse-event / version-node / version-link / status-cell
+ * 仅保留 Hero、章节标题、大数字视差、nav、footer、pill hover 等"氛围类"动画。 */
+gsap.set(
+  '.mini-card, .data-table tbody tr, .code-line, .agent-tile, .flow-node, .flow-arrow, .sse-event, .version-node, .version-link, .status-cell',
+  { clearProps: 'all' }
+);
+
+/* ===== pill hover 微交互 ===== */
+document.querySelectorAll('.pill').forEach((p) => {
+  p.addEventListener('mouseenter', () => gsap.to(p, { scale: 1.08, duration: 0.2 }));
+  p.addEventListener('mouseleave', () => gsap.to(p, { scale: 1, duration: 0.2 }));
+});
+
+/* ===== Footer 入场 ===== */
+gsap.from('.footer-title', {
+  y: 30,
+  opacity: 0,
+  duration: 0.9,
+  ease: 'power3.out',
+  scrollTrigger: { trigger: '.doc-footer', start: 'top 80%' },
+});
+gsap.from('.footer-meta', {
+  y: 20,
+  opacity: 0,
+  duration: 0.7,
+  ease: 'power2.out',
+  scrollTrigger: { trigger: '.doc-footer', start: 'top 75%' },
+  delay: 0.2,
+});
+
+/* ===== 字体加载完成后刷新 ScrollTrigger ===== */
+window.addEventListener('load', () => ScrollTrigger.refresh());
+</script>
+
+</body>
+</html>
