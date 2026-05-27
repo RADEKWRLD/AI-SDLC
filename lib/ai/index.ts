@@ -6,4 +6,4 @@ export const ai = new OpenAI({
   baseURL: "https://api.deepseek.com",
 });
 
-export const AI_MODEL = "deepseek-chat";
+export const AI_MODEL = "deepseek-v4-flash";
