@@ -4,8 +4,7 @@ import { getSessionById } from "@/lib/db/queries/sessions";
 import { getSessionMessages, createMessage } from "@/lib/db/queries/messages";
 import { getUserById } from "@/lib/db/queries/users";
 import { runConversationAgent } from "@/lib/ai/agents/conversation-agent";
-
-const READY_MARKER = "[READY]";
+import type { AgentType } from "@/lib/ai/tools";
 
 function sseEvent(data: Record<string, unknown>): string {
   return `data: ${JSON.stringify(data)}\n\n`;
@@ -61,30 +60,52 @@ export async function POST(
         controller.enqueue(encoder.encode(sseEvent(data)));
       };
 
-      let accumulated = "";
+      let assistantText = "";
+      let trigger: {
+        agents: AgentType[];
+        summary: string;
+        reasoning: string;
+      } | null = null;
 
       try {
-        for await (const token of runConversationAgent(history, userContext)) {
-          accumulated += token;
-          send({ type: "token", token });
+        for await (const event of runConversationAgent(history, userContext)) {
+          if (event.type === "token") {
+            assistantText += event.text;
+            send({ type: "token", token: event.text });
+          } else {
+            trigger = {
+              agents: event.agents,
+              summary: event.summary,
+              reasoning: event.reasoning,
+            };
+            send({
+              type: "trigger",
+              agents: event.agents,
+              summary: event.summary,
+              reasoning: event.reasoning,
+            });
+          }
         }
 
-        // Detect [READY] marker
-        const trimmed = accumulated.trimEnd();
-        const readyToGenerate = trimmed.endsWith(READY_MARKER);
-        const cleanContent = readyToGenerate
-          ? trimmed.slice(0, -READY_MARKER.length).trimEnd()
-          : trimmed;
+        const cleanContent = assistantText.trim();
 
-        // Save assistant message
         await createMessage({
           sessionId: id,
           role: "assistant",
           content: cleanContent,
-          metadata: { conversational: true, readyToGenerate },
+          metadata: {
+            conversational: true,
+            ...(trigger
+              ? {
+                  triggeredAgents: trigger.agents,
+                  triggerReasoning: trigger.reasoning,
+                  triggerSummary: trigger.summary,
+                }
+              : {}),
+          },
         });
 
-        send({ type: "done", readyToGenerate, content: cleanContent });
+        send({ type: "done", trigger, content: cleanContent });
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : "对话失败";
         send({ type: "error", error: errorMsg });

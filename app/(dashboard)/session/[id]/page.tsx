@@ -29,12 +29,10 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
   });
   const [isChatting, setIsChatting] = useState(false);
   const [streamingText, setStreamingText] = useState("");
-  const [isOrchestrating, setIsOrchestrating] = useState(false);
   const [pendingConfirmation, setPendingConfirmation] = useState<{
     agents: AgentConfirmationItem[];
     prompt: string;
   } | null>(null);
-  const [orchSteps, setOrchSteps] = useState<{ id: string; label: string; status: "running" | "done" | "error" }[]>([]);
   const [previewOpen, setPreviewOpen] = useState(true);
   const previewRef = useRef<HTMLDivElement>(null);
   const chatRef = useRef<HTMLDivElement>(null);
@@ -45,7 +43,7 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
   const clearGeneration = useGenerationStore((s) => s.clearGeneration);
 
   const isExecuting = generationRun?.status === "running";
-  const streamSteps = isOrchestrating ? orchSteps : (generationRun?.streamSteps ?? []);
+  const streamSteps = generationRun?.streamSteps ?? [];
   const agentToolParts = generationRun?.agentToolParts ?? new Map();
   const prevDocCountRef = useRef(0);
 
@@ -138,7 +136,7 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
     }
   }, [generationRun?.completedDocs.length, generationRun?.status, fetchDocuments, fetchData, clearGeneration, id]);
 
-  const isSending = isChatting || isOrchestrating || isExecuting;
+  const isSending = isChatting || isExecuting;
 
   // Phase 1: Chat with conversation agent (streaming)
   async function handleSend(content: string) {
@@ -159,8 +157,11 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
     };
     setMessages((prev) => [...prev, optimisticMsg]);
 
-    let readyToGenerate = false;
-    let chatSummary = "";
+    let trigger: {
+      agents: string[];
+      summary: string;
+      reasoning: string;
+    } | null = null;
 
     try {
       // User message is saved by the chat route, not here
@@ -194,9 +195,17 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
                 case "token":
                   setStreamingText((prev) => prev + event.token);
                   break;
+                case "trigger":
+                  trigger = {
+                    agents: event.agents,
+                    summary: event.summary,
+                    reasoning: event.reasoning,
+                  };
+                  break;
                 case "done":
-                  readyToGenerate = event.readyToGenerate;
-                  chatSummary = event.content || "";
+                  if (event.trigger) {
+                    trigger = event.trigger;
+                  }
                   break;
                 case "error":
                   throw new Error(event.error);
@@ -223,47 +232,16 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
     setStreamingText("");
     setIsChatting(false);
 
-    // If agent says ready, auto-trigger orchestration with full context
-    if (readyToGenerate) {
-      const prompt = chatSummary
-        ? `用户需求: ${content}\n\n需求总结: ${chatSummary}`
-        : content;
-      await triggerOrchestration(prompt);
-    }
-  }
-
-  // Orchestrate — get agent plan, show confirmation
-  async function triggerOrchestration(prompt: string) {
-    setIsOrchestrating(true);
-    setOrchSteps([{ id: "orch", label: "需求已就绪，正在分析...", status: "done" }]);
-
-    try {
-      const res = await fetch("/api/orchestrate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionId: id, prompt }),
-      });
-
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-      const { agents } = await res.json() as { agents: string[] };
-
-      const items: AgentConfirmationItem[] = agents.map((a) => ({
+    // If conversation agent called the trigger_generation tool,
+    // show confirmation panel directly — no separate orchestrate round-trip.
+    if (trigger && trigger.agents.length > 0) {
+      const items: AgentConfirmationItem[] = trigger.agents.map((a) => ({
         id: a,
         label: AGENT_LABELS[a as keyof typeof AGENT_LABELS] ?? a,
         description: AGENT_DESCRIPTIONS[a as keyof typeof AGENT_DESCRIPTIONS] ?? "",
         enabled: true,
       }));
-
-      setOrchSteps([]);
-      setPendingConfirmation({ agents: items, prompt });
-    } catch (err) {
-      console.error("Orchestration failed:", err);
-      setOrchSteps([
-        { id: `error-${Date.now()}`, label: "分析失败，请重试", status: "error" },
-      ]);
-    } finally {
-      setIsOrchestrating(false);
+      setPendingConfirmation({ agents: items, prompt: trigger.summary || content });
     }
   }
 

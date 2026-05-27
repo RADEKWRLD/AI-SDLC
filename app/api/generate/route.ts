@@ -4,14 +4,13 @@ import { getSessionById } from "@/lib/db/queries/sessions";
 import { getLatestDocument, createDocument } from "@/lib/db/queries/documents";
 import { createMessage } from "@/lib/db/queries/messages";
 import { getUserById } from "@/lib/db/queries/users";
-import { orchestrate } from "@/lib/ai/agents/orchestrator";
 import { runRequirementAgent } from "@/lib/ai/agents/requirement-agent";
 import { runDesignAgent } from "@/lib/ai/agents/design-agent";
 import { runERAgent } from "@/lib/ai/agents/er-agent";
 import { runAPIAgent } from "@/lib/ai/agents/api-agent";
 import { runPlanAgent } from "@/lib/ai/agents/plan-agent";
 import { AGENT_LABELS } from "@/lib/ai/agent-meta";
-import type { AgentType } from "@/lib/ai/agents/orchestrator";
+import { isAgentType, type AgentType } from "@/lib/ai/tools";
 import type { PersistedAgentStep, PersistedAgentTool } from "@/types";
 
 function sseEvent(data: Record<string, unknown>): string {
@@ -61,17 +60,15 @@ export async function POST(req: Request) {
       };
 
       try {
-        // Step 1: Orchestrate (skip if confirmedAgents provided)
-        let agentsToRun: AgentType[];
-        if (confirmedAgents && confirmedAgents.length > 0) {
-          agentsToRun = confirmedAgents.filter((a): a is AgentType =>
-            ["requirement", "design", "er", "api", "plan"].includes(a)
-          );
-          send({ type: "status", message: "开始执行已确认的 Agent..." });
-        } else {
-          send({ type: "status", message: "正在分析需求，决定调用哪些 Agent..." });
-          agentsToRun = await orchestrate(fullPrompt);
+        // confirmedAgents must come from the conversation-agent's trigger_generation tool call
+        // (front-end builds the confirmation panel from that). No more separate orchestrate round-trip.
+        const agentsToRun: AgentType[] = (confirmedAgents ?? []).filter(isAgentType);
+        if (agentsToRun.length === 0) {
+          send({ type: "error", error: "未指定要执行的 Agent" });
+          controller.close();
+          return;
         }
+        send({ type: "status", message: "开始执行已确认的 Agent..." });
         send({ type: "agents", agents: agentsToRun });
 
         // Step 2: Get existing documents for context
@@ -80,9 +77,8 @@ export async function POST(req: Request) {
 
         // Step 3: Run agents — fire all, stream as each completes
         const savedDocs: string[] = [];
-        const statusLabel = confirmedAgents ? "开始执行已确认的 Agent..." : "正在分析需求，决定调用哪些 Agent...";
         const persistedSteps: PersistedAgentStep[] = [
-          { id: `step-${Date.now()}`, label: statusLabel, status: "done" },
+          { id: `step-${Date.now()}`, label: "开始执行已确认的 Agent...", status: "done" },
         ];
         const persistedTools: PersistedAgentTool[] = [];
 

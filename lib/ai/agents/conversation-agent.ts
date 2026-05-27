@@ -1,24 +1,39 @@
 import { AI_MODEL } from "@/lib/ai";
 import { env } from "@/lib/env";
 import { CONVERSATION_AGENT_PROMPT } from "@/lib/ai/prompts";
+import {
+  TRIGGER_GENERATION_TOOL,
+  type AgentType,
+  type TriggerGenerationArgs,
+  isAgentType,
+} from "@/lib/ai/tools";
 
 export type ConversationMessage = {
   role: "user" | "assistant";
   content: string;
 };
 
+export type ConversationEvent =
+  | { type: "token"; text: string }
+  | {
+      type: "tool_call";
+      agents: AgentType[];
+      summary: string;
+      reasoning: string;
+    };
+
 const MAX_HISTORY_MESSAGES = 20;
 const MAX_CONTENT_LENGTH = 4000;
 
-/**
- * Streaming conversation agent using raw fetch to avoid OpenAI SDK
- * serialization issues with DeepSeek's streaming endpoint.
- * Yields token chunks; caller detects [READY] in accumulated text.
- */
+type ToolCallAcc = {
+  name?: string;
+  argsBuffer: string;
+};
+
 export async function* runConversationAgent(
   history: ConversationMessage[],
   userContext?: string,
-): AsyncGenerator<string> {
+): AsyncGenerator<ConversationEvent> {
   const safeHistory = history
     .slice(-MAX_HISTORY_MESSAGES)
     .map((m) => ({
@@ -42,8 +57,10 @@ export async function* runConversationAgent(
         { role: "system", content: systemPrompt },
         ...safeHistory,
       ],
+      tools: [TRIGGER_GENERATION_TOOL],
+      tool_choice: "auto",
       temperature: 0.7,
-      max_tokens: 800,
+      max_tokens: 1200,
       stream: true,
     }),
   });
@@ -58,8 +75,9 @@ export async function* runConversationAgent(
 
   const decoder = new TextDecoder();
   let buffer = "";
+  const toolCalls = new Map<number, ToolCallAcc>();
 
-  while (true) {
+  outer: while (true) {
     const { done, value } = await reader.read();
     if (done) break;
 
@@ -71,17 +89,64 @@ export async function* runConversationAgent(
       const trimmed = line.trim();
       if (!trimmed || !trimmed.startsWith("data: ")) continue;
       const data = trimmed.slice(6);
-      if (data === "[DONE]") return;
+      if (data === "[DONE]") break outer;
 
+      let parsed: unknown;
       try {
-        const parsed = JSON.parse(data);
-        const delta = parsed.choices?.[0]?.delta?.content;
-        if (delta) {
-          yield delta;
-        }
+        parsed = JSON.parse(data);
       } catch {
-        // skip unparseable lines
+        continue;
+      }
+
+      const delta = (parsed as { choices?: Array<{ delta?: unknown }> })
+        .choices?.[0]?.delta as
+        | {
+            content?: string;
+            tool_calls?: Array<{
+              index: number;
+              id?: string;
+              function?: { name?: string; arguments?: string };
+            }>;
+          }
+        | undefined;
+
+      if (!delta) continue;
+
+      if (typeof delta.content === "string" && delta.content.length > 0) {
+        yield { type: "token", text: delta.content };
+      }
+
+      if (Array.isArray(delta.tool_calls)) {
+        for (const tc of delta.tool_calls) {
+          const slot = toolCalls.get(tc.index) ?? { argsBuffer: "" };
+          if (tc.function?.name) slot.name = tc.function.name;
+          if (typeof tc.function?.arguments === "string") {
+            slot.argsBuffer += tc.function.arguments;
+          }
+          toolCalls.set(tc.index, slot);
+        }
       }
     }
+  }
+
+  for (const slot of toolCalls.values()) {
+    if (slot.name !== "trigger_generation") continue;
+    let parsedArgs: Partial<TriggerGenerationArgs> = {};
+    try {
+      parsedArgs = JSON.parse(slot.argsBuffer) as Partial<TriggerGenerationArgs>;
+    } catch {
+      continue;
+    }
+
+    const rawAgents = Array.isArray(parsedArgs.agents) ? parsedArgs.agents : [];
+    const agents = Array.from(new Set(rawAgents.filter(isAgentType)));
+    if (agents.length === 0) continue;
+
+    yield {
+      type: "tool_call",
+      agents,
+      summary: (parsedArgs.summary ?? "").toString().slice(0, 2000),
+      reasoning: (parsedArgs.reasoning ?? "").toString().slice(0, 1000),
+    };
   }
 }

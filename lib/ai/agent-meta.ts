@@ -1,4 +1,4 @@
-import type { AgentType } from "./agents/orchestrator";
+import type { AgentType } from "./tools";
 
 export const AGENT_LABELS: Record<AgentType, string> = {
   requirement: "需求分析",
