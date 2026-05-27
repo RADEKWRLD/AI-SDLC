@@ -58,15 +58,19 @@ CycleMind（AI-SDLC）是一个基于 AI 的软件生命周期辅助系统，用
                       ▼
 ┌────────────────────────────────────────────────────┐
 │              AI Agent Layer (DeepSeek)             │
-│  ┌────────────┐                                    │
-│  │Orchestrator│ ── 分析 prompt → 选择 Agent 组合   │
-│  └─────┬──────┘                                    │
+│  ┌─────────────────────────────────────────────┐   │
+│  │ ConversationAgent                           │   │
+│  │  含 trigger_generation tool                 │   │
+│  │  ↳ tool_call → 选择 Agent + summary         │   │
+│  └─────┬───────────────────────────────────────┘   │
+│        │ 用户确认后 → /api/generate                 │
 │        ├── RequirementAgent (需求结构化)            │
 │        ├── DesignAgent      (架构图生成)            │
 │        ├── ERAgent          (ER 图生成)             │
 │        ├── APIAgent         (API 规范生成)          │
 │        └── PlanAgent        (发展计划生成)          │
 │        ↑ 并行执行, SSE 逐个回传                     │
+│  详见第 14 节                                       │
 └─────────────────────┬──────────────────────────────┘
                       │
                       ▼
@@ -101,8 +105,9 @@ lib/
 ├── ai/
 │   ├── index.ts            # DeepSeek 客户端配置
 │   ├── prompts.ts          # 所有 Agent 的 System Prompt
+│   ├── tools.ts            # tool_call 工具定义 (TRIGGER_GENERATION_TOOL)
 │   └── agents/
-│       ├── orchestrator.ts # 编排器：分析 prompt → 选择 Agent
+│       ├── conversation-agent.ts # 对话 + tool_call 触发生成
 │       ├── requirement-agent.ts
 │       ├── design-agent.ts
 │       ├── er-agent.ts
@@ -208,11 +213,10 @@ middleware.ts               # Auth 路由保护
 
 ### 6.1 AI 生成流程 (`POST /api/generate`)
 
+> 触发链路（对话 → tool_call → 确认 → generate）见第 14 节。本节保留作为 `/api/generate` 内部并行执行流程的描述。
+
 ```
-用户发送 prompt
-      │
-      ▼
-Orchestrator 分析 → 返回 Agent 列表 (如 ["design", "er", "api"])
+前端传入 confirmedAgents（来自上一步 tool_call + 用户确认）
       │
       ▼
 获取该 Session 下各类型的最新文档 (作为上下文)
@@ -305,8 +309,8 @@ GITHUB_CLIENT_SECRET — GitHub OAuth (可选)
 
 ## 11. 项目创新点
 
-### 11.1 基于 LLM 的多智能体动态编排
-- **Orchestrator 动态路由**：由 LLM 充当调度器，根据用户需求语义智能选择 Sub-Agent 组合，而非固定流水线。如「做一个电商系统」可能触发全部 5 个 Agent，而「改一下 API 接口」仅触发 API Agent
+### 11.1 基于 LLM tool_call 的智能体编排
+- **tool_call 动态路由**：Conversation Agent 通过 `trigger_generation` 工具调用直接选择 Sub-Agent 组合（详见第 14 节），决策时拥有完整对话历史。如「做一个电商系统」可能触发全部 5 个 Agent，「改一下 API 接口」仅触发 API Agent
 - **并行 Agent 执行**：选定的 Agent 通过 `Promise.all()` 并行运行，各自独立完成后立即持久化结果，不阻塞其他 Agent
 - **跨 Agent 上下文传递**：Agent 间通过数据库中已有文档进行上下文传递（如 Design Agent 接收现有架构图作为参考），实现迭代式增量生成而非每次从零开始
 
@@ -315,9 +319,10 @@ GITHUB_CLIENT_SECRET — GitHub OAuth (可选)
 - **跨页面 Toast 通知**：通过 `GenerationWatcher` 在 Layout 层监听状态变化，右下角弹窗实时通知生成进度、完成、错误，支持一键跳转查看结果
 - **侧边栏状态指示**：正在生成的 Session 显示绿色脉冲圆点，用户可直观感知后台任务
 
-### 11.3 对话式需求澄清 + [READY] 自动触发
-- Conversation Agent 通过多轮对话与用户澄清需求，当判断信息充分时在回复中嵌入 `[READY]` 标记
-- 客户端检测到标记后自动触发 Orchestrator → Agent 确认 → 并行生成的完整流程，实现「聊着聊着就把设计做完了」的自然交互体验
+### 11.3 对话式需求澄清 + tool_call 自动触发
+- Conversation Agent 通过多轮对话与用户澄清需求，当判断信息充分时**调用 `trigger_generation` 工具**（DeepSeek/OpenAI 标准 tool_call），直接输出 `agents` / `summary` / `reasoning` 三个结构化字段
+- 客户端拿到 tool_call 后弹出确认面板 → 用户勾选确认 → 并行生成，实现「聊着聊着就把设计做完了」的自然交互体验
+- 相比旧 `[READY]` 字符串标记 + 独立 orchestrator 推断的两段式，新方案决策时拥有完整对话历史，无信息流失（详见第 14 节）
 
 ### 11.4 文档版本 Append-Only 策略
 - 所有 AI 生成的文档采用追加式版本管理，每次生成创建新版本并记录 `parentVersionId`，保留完整变更历史，支持版本回溯
@@ -362,8 +367,7 @@ messages_session_id_idx  → messages.sessionId
 
 | Agent | Temperature | Max Tokens | 设计意图 |
 |-------|-----------|-----------|---------|
-| Orchestrator | 0.1 | 200 | 快速确定性路由，低延迟 |
-| Conversation | 0.7 | 800 | 自然流畅对话 |
+| Conversation | 0.7 | 1200 | 自然流畅对话 + tool_call 决策（需较大 token 容纳 summary/reasoning） |
 | Design/ER/Requirement/API/Plan | 0.3 | 3000-4000 | 结构化准确输出 |
 
 ### 12.7 输入边界控制
@@ -375,7 +379,7 @@ messages_session_id_idx  → messages.sessionId
 所有 API 路由入口依次执行：`auth()` 身份认证 → Zod 输入校验 → 资源归属鉴权（确认 session 属于当前用户），密码使用 bcryptjs 加盐哈希。
 
 ### 12.9 容错与优雅降级
-- Orchestrator 解析失败时返回默认 Agent 列表 `["requirement", "design", "api", "plan"]`
+- Conversation Agent 未调用 tool_call → 继续对话，不强行进入生成流程；调用了但 `agents` 为空 → 在 `conversation-agent.ts` 解析层过滤掉，不弹空确认面板
 - Agent 执行采用 `Promise.allSettled` 模式，单个 Agent 失败不影响其他 Agent 继续运行
 - 非关键操作（如摘要消息保存）使用 `.catch(() => {})` 静默处理，不阻断主流程
 
@@ -430,3 +434,100 @@ messages_session_id_idx  → messages.sessionId
 
 ### 13.12 Shiki 异步语法高亮
 - 代码块使用 Shiki 客户端异步高亮，支持多语言语法着色，带 fallback 降级显示
+
+---
+
+## 14. tool_call 架构（取代 Orchestrator + [READY]）
+
+> 本节描述项目当前的「触发-生成」架构，取代第 6.1、11.1、11.3 节中描述的旧 Orchestrator 路径。
+
+### 14.1 设计动机
+
+旧架构是两段式：
+1. `conversation-agent` 流式输出自然语言，在末尾贴 `[READY]` 字符串标记
+2. 前端检测到标记后调用独立的 `/api/orchestrate`，让另一次 LLM 推断要触发哪些 Agent
+
+该路径下 orchestrator **拿不到完整对话历史**，只看用户最后一条输入 + assistant 回复的拼接快照。当用户简短回复（如「都行」）时，LLM 经常返回 `[]`，UI 出现「确认执行 (0)」卡死。
+
+**根因**：决策和决策者被人为切开 —— conversation-agent 拿着完整上下文，却把决策权交给了一个无上下文的二次推断。
+
+### 14.2 新架构：tool_call 单调用决策
+
+`conversation-agent` 在 fetch DeepSeek 时同时传入 `tools: [TRIGGER_GENERATION_TOOL]`，模型决定触发生成时**直接通过 tool_call 输出结构化决策**：
+
+| 字段 | 类型 | 用途 |
+|------|------|------|
+| `agents` | `AgentType[]` | 要调用的 Agent 列表（枚举校验） |
+| `summary` | `string` (<300字) | 需求总结，作为后续 Agent 的输入 prompt |
+| `reasoning` | `string` (<200字) | 选这几个 Agent 的决策理由，存进 message metadata |
+
+调用方（chat 路由 + 前端）解析流式 `delta.tool_calls`，累积完整 arguments 后 `JSON.parse`，直接弹出确认面板。**没有 `[READY]` 字符串，没有独立 `/api/orchestrate` round-trip。**
+
+### 14.3 流式 tool_call 处理要点
+
+DeepSeek/OpenAI 协议中，流式 `tool_calls` 的 `function.arguments` 是**按 `index` 分片的 JSON 字符串**：
+
+- 首 chunk 通常带 `id` + `function.name`，后续 chunk 只带 `arguments` 片段
+- 调用方需按 `index` 累积成完整字符串，**流结束后**整体 `JSON.parse`
+- 流中途 `arguments` 一般不是合法 JSON（可能停在引号或转义里）
+
+实现见 [lib/ai/agents/conversation-agent.ts](lib/ai/agents/conversation-agent.ts)，核心是 `toolCalls = new Map<number, ToolCallAcc>()` 累加结构 + 流末 for-loop 解析。
+
+### 14.4 数据流
+
+```
+用户消息
+  → POST /api/sessions/[id]/chat
+     ├─ auth + saveUserMessage
+     ├─ 取 user.md + 最近 40 条 history
+     └─ 启动 SSE ReadableStream
+        │
+        ▼ runConversationAgent(history, userContext)
+        conversation-agent.ts
+          system = CONVERSATION_AGENT_PROMPT + user.md
+          tools  = [TRIGGER_GENERATION_TOOL]
+          fetch deepseek.com/chat/completions (stream)
+            ├─ delta.content     → yield { type: "token" }
+            └─ delta.tool_calls  → 流末 yield { type: "tool_call" }
+        │
+        ▼ chat/route.ts SSE 转发
+        token     → SSE { type: "token", token }
+        tool_call → SSE { type: "trigger", agents, summary, reasoning }
+        流结束    → createMessage(metadata={ triggeredAgents, triggerReasoning, triggerSummary })
+                    SSE { type: "done", trigger, content }
+        │
+        ▼ 前端 page.tsx
+        token   → setStreamingText（实时显示气泡）
+        trigger → 暂存到局部变量
+        done    → 刷消息列表
+        │
+        ▼ (trigger 非空)
+        setPendingConfirmation → AgentConfirmation 渲染「确认执行 (N)」
+        │
+        ▼ 用户勾选 + 点击确认
+        useGenerationStore.startGeneration
+        → POST /api/generate { sessionId, prompt=summary, confirmedAgents }
+           并行执行选中的 Sub-Agent（见第 6.1 节）
+```
+
+### 14.5 关键文件
+
+| 文件 | 职责 |
+|------|------|
+| [lib/ai/tools.ts](lib/ai/tools.ts) | `TRIGGER_GENERATION_TOOL` 定义、`AgentType`、`isAgentType` |
+| [lib/ai/agents/conversation-agent.ts](lib/ai/agents/conversation-agent.ts) | 流式 LLM 调用 + tool_call 分片累积 + 返回 tagged union 事件 |
+| [app/api/sessions/[id]/chat/route.ts](app/api/sessions/[id]/chat/route.ts) | SSE 转发 + 持久化消息 + reasoning 写 metadata |
+| [app/(dashboard)/session/[id]/page.tsx](app/(dashboard)/session/[id]/page.tsx) | 接收 `trigger` 事件 → 直接渲染确认面板 |
+| [lib/ai/prompts.ts](lib/ai/prompts.ts) | `CONVERSATION_AGENT_PROMPT` 指令模型调用工具，不再使用 [READY] |
+
+### 14.6 新旧对比
+
+| 维度 | 旧架构 | 新架构 |
+|------|--------|--------|
+| LLM 调用次数 | 2（conversation + orchestrate） | 1 |
+| 决策时上下文 | 单句快照（用户最后输入 + assistant 回复） | 完整 40 条历史 + user.md |
+| 通信契约 | 字符串标记 `[READY]` | JSON Schema 强类型 |
+| 已知失败模式 | LLM 返回 `[]` → 「确认执行 (0)」卡死 UX | LLM 不调工具 = 继续对话；调工具但 agents 空 = 解析层过滤 |
+| 用户决策权 | 保留（确认面板） | 保留（确认面板） |
+
+**核心理念**：把「决策」和「决策者」重新接上 —— 谁拿着上下文，谁就拥有决策权。这正是 tool_call 范式的设计初衷。
