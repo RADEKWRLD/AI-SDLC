@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CycleMind</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Poppins:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+<style>
+:root{
+  --bg-base:#ECE9E0; --bg-raised:#F5F3EC; --bg-overlay:#FDFCF8; --bg-inverted:#141413;
+  --text-primary:#141413; --text-secondary:#6B6860; --text-muted:#B0AEA5; --text-inverted:#FAF9F5;
+  --border-default:#D8D5CC; --border-subtle:#E8E6DC; --border-strong:#9B9890;
+  --orange:#D97757; --warm:#C96442; --blue:#6A9BCC; --green:#788C5D; --sand:#C4B99A;
+  --success:#6B8F47; --warning:#C9943A; --error:#C0453A;
+  --font-display:'Lora','Songti SC','STSong',serif;
+  --font-heading:'Poppins','PingFang SC','Microsoft YaHei',sans-serif;
+  --font-body:'Lora','Songti SC','STSong',serif;
+  --font-cn:'Poppins','PingFang SC','Microsoft YaHei',sans-serif;
+  --font-mono:'JetBrains Mono','SFMono-Regular',monospace;
+  --ease:cubic-bezier(0.16,1,0.3,1);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden}
+body{
+  background:var(--bg-base);
+  color:var(--text-primary);
+  font-family:var(--font-cn);
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ── Deck shell ── */
+.deck{position:fixed;inset:0;}
+.slide{
+  position:absolute;inset:0;
+  display:none;
+  flex-direction:column;
+  justify-content:center;
+  padding:6.5vh 8vw;
+  opacity:0;
+  background-image:
+    radial-gradient(ellipse 70% 55% at 12% 8%, rgba(217,119,87,0.07) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 92% 95%, rgba(106,155,204,0.05) 0%, transparent 55%);
+}
+.slide.active{display:flex}
+
+/* ── Top progress bar ── */
+.progress-wrap{position:fixed;top:0;left:0;right:0;height:3px;z-index:50;background:transparent}
+.progress-bar{height:100%;width:0;background:linear-gradient(90deg,var(--orange),var(--warm));transition:width .5s var(--ease)}
+
+/* ── Page indicator ── */
+.pager{position:fixed;right:32px;bottom:26px;z-index:50;font-family:var(--font-mono);font-size:13px;color:var(--text-muted);letter-spacing:.08em}
+.pager b{color:var(--warm);font-weight:500}
+.hint{position:fixed;left:32px;bottom:26px;z-index:50;font-family:var(--font-cn);font-size:12px;color:var(--text-muted);letter-spacing:.04em}
+.hint kbd{font-family:var(--font-mono);background:var(--bg-raised);border:1px solid var(--border-default);border-bottom-width:2px;border-radius:5px;padding:1px 6px;font-size:11px;color:var(--text-secondary)}
+
+/* click zones */
+.nav-zone{position:fixed;top:0;bottom:0;width:12vw;z-index:40;cursor:pointer}
+.nav-zone.left{left:0}.nav-zone.right{right:0}
+
+/* ── Typography ── */
+.kicker{font-family:var(--font-heading);font-weight:600;font-size:13px;letter-spacing:.22em;text-transform:uppercase;color:var(--orange);margin-bottom:18px;display:flex;align-items:center;gap:12px}
+.kicker::before{content:"";width:34px;height:2px;background:var(--orange);display:inline-block}
+h1.title{font-family:var(--font-display);font-weight:600;font-size:clamp(2.4rem,5vw,4rem);line-height:1.1;letter-spacing:-.01em;max-width:24ch}
+h2.title{font-family:var(--font-display);font-weight:600;font-size:clamp(2rem,3.8vw,3rem);line-height:1.15;letter-spacing:-.01em;max-width:26ch;margin-bottom:8px}
+.subtitle{font-family:var(--font-body);font-size:clamp(1.05rem,1.6vw,1.35rem);color:var(--text-secondary);line-height:1.7;max-width:60ch;margin-top:18px}
+.lead{font-family:var(--font-cn);font-size:15px;color:var(--text-secondary);line-height:1.8;max-width:64ch}
+.mono{font-family:var(--font-mono)}
+.accent{color:var(--warm)}
+.me-tag{display:inline-flex;align-items:center;gap:6px;font-family:var(--font-heading);font-weight:600;font-size:12px;letter-spacing:.04em;color:#fff;background:var(--orange);padding:3px 11px;border-radius:99px}
+.me-tag::before{content:"●";font-size:8px}
+
+/* ── Cards & grids ── */
+.grid{display:grid;gap:18px;margin-top:34px}
+.g2{grid-template-columns:repeat(2,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g4{grid-template-columns:repeat(4,1fr)}
+.g5{grid-template-columns:repeat(5,1fr)}
+.card{
+  background:var(--bg-raised);border:1px solid var(--border-subtle);border-radius:16px;
+  padding:22px 22px;box-shadow:0 1px 0 rgba(20,20,19,.02),0 8px 24px -16px rgba(20,20,19,.18);
+}
+.card h3{font-family:var(--font-heading);font-weight:600;font-size:16px;margin-bottom:8px;display:flex;align-items:center;gap:9px}
+.card p{font-family:var(--font-cn);font-size:13.5px;color:var(--text-secondary);line-height:1.7}
+.card .ico{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-size:15px;background:rgba(217,119,87,.12);color:var(--warm);flex:none}
+.tag{display:inline-block;font-family:var(--font-mono);font-size:11px;color:var(--text-secondary);background:var(--bg-overlay);border:1px solid var(--border-default);border-radius:6px;padding:3px 9px;margin:3px 4px 0 0}
+
+.bignum{font-family:var(--font-display);font-weight:600;font-size:clamp(2.6rem,4.6vw,3.8rem);line-height:1;color:var(--warm)}
+.bignum small{font-family:var(--font-heading);font-size:14px;color:var(--text-secondary);font-weight:500;margin-left:6px}
+
+/* ── Pipeline (架构图) ── */
+.pipe{display:flex;flex-direction:column;align-items:center;gap:0;margin-top:24px}
+.node{
+  background:var(--bg-raised);border:1.5px solid var(--border-default);border-radius:14px;
+  padding:14px 26px;text-align:center;min-width:280px;position:relative;
+  box-shadow:0 8px 22px -16px rgba(20,20,19,.3);
+}
+.node .nt{font-family:var(--font-heading);font-weight:600;font-size:15px}
+.node .nd{font-family:var(--font-cn);font-size:12px;color:var(--text-secondary);margin-top:2px}
+.node.hot{border-color:var(--orange);background:linear-gradient(180deg,#fff,rgba(217,119,87,.06))}
+.node.dark{background:var(--bg-inverted);border-color:#2a2a28}
+.node.dark .nt{color:var(--text-inverted)}
+.node.dark .nd{color:var(--text-muted)}
+.connector{width:2px;height:30px;background:linear-gradient(180deg,var(--orange),var(--sand));transform-origin:top;border-radius:2px}
+.agent-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.agent-chip{background:var(--bg-overlay);border:1.5px solid var(--border-default);border-radius:12px;padding:11px 16px;min-width:120px;text-align:center}
+.agent-chip .an{font-family:var(--font-heading);font-weight:600;font-size:13px}
+.agent-chip .ao{font-family:var(--font-mono);font-size:10.5px;color:var(--text-muted);margin-top:3px}
+.fan{position:relative;height:34px;width:80%;margin:0 auto}
+
+/* ── Compare (tool_call 重构) ── */
+.compare{display:grid;grid-template-columns:1fr auto 1fr;gap:22px;align-items:stretch;margin-top:30px}
+.col{border-radius:16px;padding:24px;border:1.5px solid var(--border-default)}
+.col.old{background:rgba(192,69,58,.05);border-color:rgba(192,69,58,.25)}
+.col.new{background:rgba(107,143,71,.06);border-color:rgba(107,143,71,.3)}
+.col h4{font-family:var(--font-heading);font-weight:600;font-size:15px;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.col.old h4{color:var(--error)}.col.new h4{color:var(--success)}
+.flow-step{font-family:var(--font-cn);font-size:13px;color:var(--text-secondary);padding:9px 0;border-bottom:1px dashed var(--border-default);display:flex;gap:10px;align-items:flex-start;line-height:1.6}
+.flow-step:last-child{border-bottom:none}
+.flow-step .si{font-family:var(--font-mono);color:var(--warm);flex:none;font-size:12px;font-weight:500;margin-top:1px}
+.arrow-mid{display:grid;place-items:center;font-size:26px;color:var(--orange)}
+.code{font-family:var(--font-mono);font-size:12px;background:var(--bg-inverted);color:#e8e4da;border-radius:12px;padding:18px 20px;line-height:1.75;overflow:auto;margin-top:18px}
+.code .c1{color:#d9a679}.code .c2{color:#8fb573}.code .c3{color:#6a9bcc}.code .cm{color:#6b6860}
+
+/* ── Swimlanes ── */
+.lanes{display:flex;flex-direction:column;gap:12px;margin-top:28px}
+.lane{display:flex;align-items:center;gap:14px}
+.lane .lname{font-family:var(--font-heading);font-weight:600;font-size:13px;width:120px;flex:none;text-align:right;color:var(--text-secondary)}
+.lane .ltrack{flex:1;height:34px;background:var(--bg-raised);border:1px solid var(--border-subtle);border-radius:9px;position:relative;overflow:hidden}
+.lane .lfill{position:absolute;inset:0;transform-origin:left;border-radius:9px;background:linear-gradient(90deg,rgba(217,119,87,.22),rgba(217,119,87,.5));display:flex;align-items:center;padding-left:14px;font-family:var(--font-mono);font-size:11px;color:var(--warm)}
+
+/* ── Data model table ── */
+.erbox{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-top:30px}
+.ertable{background:var(--bg-raised);border:1.5px solid var(--border-default);border-radius:14px;overflow:hidden}
+.ertable .eh{font-family:var(--font-heading);font-weight:600;font-size:14px;background:var(--bg-inverted);color:var(--text-inverted);padding:10px 14px;display:flex;align-items:center;gap:7px}
+.ertable .er{font-family:var(--font-mono);font-size:11.5px;color:var(--text-secondary);padding:6px 14px;border-bottom:1px solid var(--border-subtle);display:flex;justify-content:space-between}
+.ertable .er:last-child{border-bottom:none}
+.ertable .er .k{color:var(--warm)}
+.ertable.key{border-color:var(--orange);box-shadow:0 0 0 3px rgba(217,119,87,.12)}
+
+/* ── List items ── */
+.flist{margin-top:28px;display:flex;flex-direction:column;gap:14px}
+.fitem{display:flex;gap:16px;align-items:flex-start}
+.fitem .fn{font-family:var(--font-display);font-weight:600;font-size:22px;color:var(--orange);width:42px;flex:none;line-height:1}
+.fitem .ft{font-family:var(--font-heading);font-weight:600;font-size:15.5px;margin-bottom:3px}
+.fitem .fd{font-family:var(--font-cn);font-size:13.5px;color:var(--text-secondary);line-height:1.7;max-width:72ch}
+
+/* ── Cover ── */
+.cover-logo{display:flex;align-items:center;gap:14px;margin-bottom:42px}
+.cover-logo .mark{width:46px;height:46px;border-radius:13px;background:var(--orange);display:grid;place-items:center;color:#fff;font-family:var(--font-display);font-weight:700;font-size:24px;box-shadow:0 10px 30px -10px rgba(217,119,87,.6)}
+.cover-logo .lname{font-family:var(--font-heading);font-weight:600;font-size:19px;letter-spacing:.02em}
+.cover-meta{margin-top:46px;display:flex;gap:40px;flex-wrap:wrap}
+.cover-meta div .ml{font-family:var(--font-heading);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px}
+.cover-meta div .mv{font-family:var(--font-cn);font-size:15px;color:var(--text-primary)}
+.cover-deco{position:absolute;right:10vw;top:50%;width:44vw;height:44vw;max-width:600px;max-height:600px;opacity:.12;pointer-events:none;transform:translateY(-50%);transform-origin:center;animation:deco-spin 24s linear infinite}
+@keyframes deco-spin{from{transform:translateY(-50%) rotate(0deg)}to{transform:translateY(-50%) rotate(360deg)}}
+
+/* ── two-col layout ── */
+.split{display:grid;grid-template-columns:1.1fr 1fr;gap:46px;align-items:center;margin-top:18px}
+.panel{background:var(--bg-raised);border:1px solid var(--border-subtle);border-radius:18px;padding:26px;box-shadow:0 10px 30px -22px rgba(20,20,19,.4)}
+
+/* workbench mock */
+.wb{display:flex;gap:8px;height:300px}
+.wb .chat{flex:0 0 38%;background:var(--bg-overlay);border:1px solid var(--border-default);border-radius:12px;padding:14px}
+.wb .preview{flex:1;background:var(--bg-overlay);border:1px solid var(--border-default);border-radius:12px;padding:14px;position:relative;overflow:hidden}
+.wb .think{flex:0 0 16%;background:var(--bg-inverted);border-radius:12px;padding:12px}
+.wb .lbl{font-family:var(--font-heading);font-weight:600;font-size:11px;color:var(--text-muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px}
+.wb .think .lbl{color:var(--text-muted)}
+.bubble{background:var(--bg-raised);border-radius:9px;padding:8px 10px;font-size:11px;color:var(--text-secondary);margin-bottom:7px;font-family:var(--font-cn)}
+.bubble.u{background:rgba(217,119,87,.14);margin-left:18px}
+.tabrow{display:flex;gap:5px;margin-bottom:10px;flex-wrap:wrap}
+.tabrow span{font-family:var(--font-heading);font-size:10px;padding:3px 8px;border-radius:6px;background:var(--bg-raised);color:var(--text-secondary)}
+.tabrow span.on{background:var(--orange);color:#fff}
+.thinkline{height:6px;border-radius:3px;background:#2c2c2a;margin-bottom:7px}
+.thinkline.on{background:var(--orange)}
+
+.takeaway{margin-top:30px;background:var(--bg-inverted);color:var(--text-inverted);border-radius:14px;padding:18px 24px;font-family:var(--font-body);font-size:15px;line-height:1.7;display:flex;gap:14px;align-items:flex-start}
+.takeaway .ti{color:var(--orange);font-size:20px;flex:none}
+.takeaway b{color:#fff;font-family:var(--font-heading);font-weight:600}
+
+.metricrow{display:flex;gap:38px;margin-top:34px;flex-wrap:wrap}
+.metricrow .m .v{font-family:var(--font-display);font-weight:600;font-size:2.6rem;color:var(--warm);line-height:1}
+.metricrow .m .l{font-family:var(--font-cn);font-size:13px;color:var(--text-secondary);margin-top:6px}
+
+/* ── slide 9b 对比表 ── */
+.cmp-table{width:100%;border-collapse:separate;border-spacing:0;margin-top:26px;font-family:var(--font-cn)}
+.cmp-table th,.cmp-table td{text-align:left;padding:12px 16px;font-size:13px;line-height:1.5;border-bottom:1px solid var(--border-subtle);vertical-align:top}
+.cmp-table thead th{font-family:var(--font-heading);font-weight:600;font-size:13.5px;color:var(--text-secondary);border-bottom:1.5px solid var(--border-default)}
+.cmp-table td:first-child,.cmp-table th:first-child{font-family:var(--font-heading);font-weight:600;color:var(--text-primary);width:120px}
+.cmp-table td{color:var(--text-secondary)}
+.cmp-table .me{background:rgba(217,119,87,.07)}
+.cmp-table th.me{color:var(--warm);background:rgba(217,119,87,.12);border-bottom-color:var(--orange)}
+.cmp-table td.me{color:var(--text-primary);font-weight:500}
+.cmp-table tbody tr:last-child td{border-bottom:none}
+.cmp-table thead th:last-child{border-top-right-radius:10px}
+.cmp-table tbody tr:last-child td.me{border-bottom-right-radius:10px}
+
+/* ── slide 9c 优缺点 ── */
+.pc-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:28px}
+.pc-col{border-radius:16px;padding:22px 24px;border:1.5px solid var(--border-default)}
+.pc-col.pros{background:rgba(107,143,71,.06);border-color:rgba(107,143,71,.3)}
+.pc-col.cons{background:rgba(201,148,58,.06);border-color:rgba(201,148,58,.32)}
+.pc-col h4{font-family:var(--font-heading);font-weight:600;font-size:16px;margin-bottom:14px}
+.pc-col.pros h4{color:var(--success)}.pc-col.cons h4{color:var(--warning)}
+.pc-item{font-family:var(--font-cn);font-size:12.5px;color:var(--text-secondary);line-height:1.6;padding:8px 0;border-bottom:1px dashed var(--border-default)}
+.pc-item:last-child{border-bottom:none}
+.pc-item b{display:block;font-family:var(--font-heading);font-weight:600;font-size:13px;color:var(--text-primary);margin-bottom:2px}
+.pc-item i{color:var(--warm);font-style:normal}
+
+/* ── slide 4 架构图 紧凑化(防止纵向溢出截断)── */
+[data-slide="arch"]{padding-top:4vh;padding-bottom:4vh;justify-content:flex-start}
+[data-slide="arch"] h2.title{font-size:clamp(1.7rem,3vw,2.4rem);margin-bottom:0}
+[data-slide="arch"] .kicker{margin-bottom:10px}
+[data-slide="arch"] .pipe{gap:0;margin-top:10px}
+[data-slide="arch"] .node{padding:8px 24px;min-width:300px;border-radius:12px}
+[data-slide="arch"] .node .nt{font-size:14px}
+[data-slide="arch"] .node .nd{font-size:11px;margin-top:1px}
+[data-slide="arch"] .connector{height:15px}
+[data-slide="arch"] .agent-chip{padding:7px 14px;min-width:108px}
+[data-slide="arch"] .agent-chip .an{font-size:12px}
+[data-slide="arch"] .agent-chip .ao{font-size:9.5px;margin-top:1px}
+
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="progress-wrap"><div class="progress-bar" id="pbar"></div></div>
+<div class="nav-zone left"  onclick="prev()"></div>
+<div class="nav-zone right" onclick="next()"></div>
+
+<div class="deck" id="deck">
+
+  <!-- 1 · COVER -->
+  <section class="slide" data-slide="cover">
+    <svg class="cover-deco" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+      <circle cx="24" cy="24" r="22" stroke="#FA5D29" stroke-width="2" fill="none"/>
+      <path d="M17 15a11 11 0 0114 0" stroke="#FA5D29" stroke-width="3" stroke-linecap="round"/>
+      <path d="M31 33a11 11 0 01-14 0" stroke="#FA5D29" stroke-width="3" stroke-linecap="round"/>
+      <path d="M32.5 16.5l-1.5-3.5-3.5 1.5" stroke="#FA5D29" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M15.5 31.5l1.5 3.5 3.5-1.5" stroke="#FA5D29" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="24" cy="24" r="2.5" fill="#FA5D29"/>
+    </svg>
+    <div class="cover-logo reveal">
+      <div class="mark">C</div>
+      <div class="lname">CycleMind</div>
+    </div>
+    <div class="kicker reveal">期末项目答辩 · Final Defense</div>
+    <h1 class="title reveal">AI 驱动的<br/><span class="accent">软件全生命周期</span>文档生成系统</h1>
+    <p class="subtitle reveal">以对话澄清需求,由多个 Sub-Agent 并行生成需求 / 架构 / ER / API / 计划五类工程文档 —— 让设计文档随对话一起演化。</p>
+    <div class="cover-meta reveal">
+      <div><div class="ml">项目代号</div><div class="mv">CycleMind · AI-SDLC</div></div>
+      <div><div class="ml">技术核心</div><div class="mv">多 Agent 编排 · tool_call · SSE</div></div>
+    </div>
+  </section>
+
+  <!-- 2 · PROBLEM -->
+  <section class="slide" data-slide="problem">
+    <div class="kicker reveal">01 · 问题与定位</div>
+    <h2 class="title reveal">软件设计文档,天生<span class="accent">割裂且易过时</span></h2>
+    <div class="grid g3 reveal-stagger">
+      <div class="card"><h3><span class="ico">✍️</span>手写成本高</h3><p>需求文档、架构图、ER 图、API 规范、开发计划要分别撰写,工具分散,初学者上手门槛高。</p></div>
+      <div class="card"><h3><span class="ico">🔗</span>文档相互脱节</h3><p>改了需求,架构图不同步;架构动了,ER / API 又对不上 —— 五类文档很难保持一致演化。</p></div>
+      <div class="card"><h3><span class="ico">⏳</span>迭代即过时</h3><p>每次需求变化都要从头重画,旧版本无从追溯,设计的演化历史彻底丢失。</p></div>
+    </div>
+    <div class="takeaway reveal"><span class="ti">◆</span><div><b>CycleMind 的定位:</b> 用一段自然语言对话澄清需求,AI 自动判断时机、并行生成全套工程文档,并以 append-only 版本记录每一次演化 —— 文档第一次真正"活"了起来。</div></div>
+  </section>
+
+  <!-- 3 · TECH STACK -->
+  <section class="slide" data-slide="stack">
+    <div class="kicker reveal">02 · 技术栈总览</div>
+    <h2 class="title reveal">现代全栈 · 零运维 Serverless 架构</h2>
+    <div class="grid g4 reveal-stagger">
+      <div class="card"><h3><span class="ico">▲</span>框架</h3><p>Next.js 16 · App Router<br/>React 19 · Turbopack<br/>TypeScript · Tailwind v4</p></div>
+      <div class="card"><h3><span class="ico">🗄</span>数据层</h3><p>Neon PostgreSQL<br/>Drizzle ORM 0.45<br/>@neondatabase/serverless</p></div>
+      <div class="card"><h3><span class="ico">🔐</span>认证</h3><p>Auth.js v5 (beta)<br/>邮箱密码 + GitHub OAuth<br/>bcryptjs · middleware 保护</p></div>
+      <div class="card"><h3><span class="ico">🤖</span>AI 引擎</h3><p>DeepSeek API<br/><span class="mono">deepseek-v4-flash</span><br/>OpenAI SDK 兼容 · function calling</p></div>
+      <div class="card"><h3><span class="ico">⚡</span>状态</h3><p>Zustand 5<br/>全局生成 Store<br/>SSE 流式驱动</p></div>
+      <div class="card"><h3><span class="ico">🎞</span>动效</h3><p>GSAP 3.14<br/>三栏布局动画<br/>思维链展开收起</p></div>
+      <div class="card"><h3><span class="ico">📊</span>渲染</h3><p>Mermaid 11 (动态 import)<br/>react-markdown + remark-gfm<br/>Shiki 语法高亮</p></div>
+      <div class="card"><h3><span class="ico">☁</span>部署</h3><p>Vercel<br/>Edge + Serverless Functions<br/>Vercel Analytics</p></div>
+    </div>
+  </section>
+
+  <!-- 4 · CORE ARCHITECTURE -->
+  <section class="slide" data-slide="arch">
+    <div class="kicker reveal">03 · 整体核心架构</div>
+    <h2 class="title reveal" style="margin-bottom:4px">一条对话驱动的<span class="accent">文档生成流水线</span></h2>
+    <div class="pipe">
+      <div class="node arch-node reveal"><div class="nt">👤 用户对话</div><div class="nd">自然语言描述项目需求</div></div>
+      <div class="connector arch-conn"></div>
+      <div class="node hot arch-node reveal"><div class="nt">🤖 对话 Agent · <span class="mono">tool_call</span></div><div class="nd">流式回应 + 自动判断是否触发生成</div></div>
+      <div class="connector arch-conn"></div>
+      <div class="node arch-node reveal"><div class="nt">✅ 确认面板</div><div class="nd">用户勾选要生成的文档类型</div></div>
+      <div class="connector arch-conn"></div>
+      <div class="node dark arch-node reveal"><div class="nt">⚙️ 并行编排 · <span class="mono">Promise.all()</span></div><div class="nd">5 个 Sub-Agent 同时启动 · SSE 逐个回传</div></div>
+      <div class="connector arch-conn"></div>
+      <div class="agent-row reveal-stagger" style="margin-top:4px">
+        <div class="agent-chip arch-node"><div class="an">需求</div><div class="ao">requirement</div></div>
+        <div class="agent-chip arch-node"><div class="an">架构</div><div class="ao">design</div></div>
+        <div class="agent-chip arch-node"><div class="an">ER 图</div><div class="ao">er</div></div>
+        <div class="agent-chip arch-node"><div class="an">API</div><div class="ao">api</div></div>
+        <div class="agent-chip arch-node"><div class="an">计划</div><div class="ao">plan</div></div>
+      </div>
+      <div class="connector arch-conn"></div>
+      <div class="node arch-node reveal"><div class="nt">📚 append-only 文档版本</div><div class="nd"><span class="mono">version + parentVersionId</span> 链式追溯</div></div>
+      <div class="connector arch-conn"></div>
+      <div class="node arch-node reveal"><div class="nt">🖥 三栏工作台预览</div><div class="nd">ChatPanel · PreviewPanel · 思维链</div></div>
+    </div>
+  </section>
+
+  <!-- 5 · DATA MODEL -->
+  <section class="slide" data-slide="data">
+    <div class="kicker reveal">04 · 数据模型</div>
+    <h2 class="title reveal">五张核心表 · Drizzle ORM Schema</h2>
+    <div class="erbox reveal-stagger">
+      <div class="ertable"><div class="eh">👤 users</div>
+        <div class="er"><span>id</span><span class="k">uuid PK</span></div>
+        <div class="er"><span>email</span><span>text</span></div>
+        <div class="er"><span>passwordHash</span><span>text</span></div>
+        <div class="er"><span>userMd</span><span>text</span></div>
+        <div class="er"><span>preferences</span><span>jsonb</span></div>
+      </div>
+      <div class="ertable"><div class="eh">📁 sessions</div>
+        <div class="er"><span>id</span><span class="k">uuid PK</span></div>
+        <div class="er"><span>userId</span><span class="k">FK</span></div>
+        <div class="er"><span>title</span><span>text</span></div>
+        <div class="er"><span>status</span><span>enum</span></div>
+        <div class="er"><span>idx</span><span>userId</span></div>
+      </div>
+      <div class="ertable key"><div class="eh">📄 documents</div>
+        <div class="er"><span>id</span><span class="k">uuid PK</span></div>
+        <div class="er"><span>sessionId</span><span class="k">FK</span></div>
+        <div class="er"><span>type</span><span>enum</span></div>
+        <div class="er"><span>version</span><span class="k">int ↑</span></div>
+        <div class="er"><span>parentVersionId</span><span class="k">self FK</span></div>
+      </div>
+      <div class="ertable"><div class="eh">💬 messages</div>
+        <div class="er"><span>id</span><span class="k">uuid PK</span></div>
+        <div class="er"><span>sessionId</span><span class="k">FK</span></div>
+        <div class="er"><span>role</span><span>enum</span></div>
+        <div class="er"><span>content</span><span>text</span></div>
+        <div class="er"><span>metadata</span><span>jsonb</span></div>
+      </div>
+      <div class="ertable"><div class="eh">🧩 templates</div>
+        <div class="er"><span>id</span><span class="k">uuid PK</span></div>
+        <div class="er"><span>name</span><span>text</span></div>
+        <div class="er"><span>prompt</span><span>text</span></div>
+        <div class="er"><span>icon</span><span>text</span></div>
+        <div class="er"><span>isBuiltin</span><span>bool</span></div>
+      </div>
+    </div>
+    <div class="takeaway reveal"><span class="ti">◆</span><div><b>append-only 设计:</b> <span class="mono">documents</span> 永不覆盖 —— 每次生成 <span class="mono">version</span> 自增、<span class="mono">parentVersionId</span> 指向上一版,形成完整的设计演化链。外键均建索引,会话/文档/消息查询恒定 O(log n)。</div></div>
+  </section>
+
+  <!-- 6 · AGENT OVERVIEW -->
+  <section class="slide" data-slide="agents">
+    <div class="kicker reveal">05 · AI Agent 系统总览</div>
+    <h2 class="title reveal">6 个职责单一的 Sub-Agent</h2>
+    <p class="lead reveal" style="margin-top:10px">每个 Agent = 一段精心设计的 Prompt + 独立的温度与 token 上限,职责彻底解耦,可单独迭代、单独触发。</p>
+    <div class="grid g3 reveal-stagger">
+      <div class="card"><h3><span class="ico">💬</span>conversation</h3><p>实时对话 + 触发决策。流式 SSE,温度 0.7,挂载 <span class="mono">trigger_generation</span> 工具。<b>系统的大脑。</b></p></div>
+      <div class="card"><h3><span class="ico">📋</span>requirement</h3><p>结构化需求分析文档 (Markdown)。温度 0.3,3000 tokens。</p></div>
+      <div class="card"><h3><span class="ico">🏗</span>design</h3><p>系统架构图 (Mermaid TD)。读已有架构图增量演化。</p></div>
+      <div class="card"><h3><span class="ico">🔗</span>er</h3><p>数据库 ER 图 (Mermaid erDiagram)。读已有 ER 图演化。</p></div>
+      <div class="card"><h3><span class="ico">🔌</span>api</h3><p>RESTful API 规范文档。读已有 API spec 作为上下文。</p></div>
+      <div class="card"><h3><span class="ico">🗓</span>plan</h3><p>开发路线图与里程碑。温度 0.3,4000 tokens。</p></div>
+    </div>
+    <div class="takeaway reveal"><span class="ti">◆</span><div>注意:<b>没有独立的 orchestrator agent</b> —— 编排决策被收进了对话 Agent 自身。这正是本次重构的核心,见下一页。</div></div>
+  </section>
+
+  <!-- 7 · CONVERSATION AGENT (ME) -->
+  <section class="slide" data-slide="conv">
+    <div class="kicker reveal">06 · 核心</div>
+    <h2 class="title reveal">对话 Agent:边聊边判断<span class="accent">何时该生成</span></h2>
+    <div class="split">
+      <div>
+        <div class="flist reveal-stagger">
+          <div class="fitem"><div class="fn">01</div><div><div class="ft">流式 SSE 实时回应</div><div class="fd">用户消息进入 <span class="mono">/api/sessions/[id]/chat</span>,以 <span class="mono">stream:true</span> 调用 DeepSeek,token 逐字回传,体验零延迟。</div></div></div>
+          <div class="fitem"><div class="fn">02</div><div><div class="ft">挂载唯一工具 trigger_generation</div><div class="fd"><span class="mono">tool_choice:"auto"</span> —— 模型自主决定:继续追问澄清,还是调用工具触发生成。</div></div></div>
+          <div class="fitem"><div class="fn">03</div><div><div class="ft">需求就绪判断标准</div><div class="fd">① 项目目标清晰 + 核心功能基本确定 + 无明显歧义;② 或用户明确要求生成 —— 满足其一即触发。</div></div></div>
+        </div>
+      </div>
+      <div class="panel reveal">
+        <div class="wb" style="height:auto">
+          <div class="chat" style="flex:1">
+            <div class="lbl">对话流</div>
+            <div class="bubble u">做个图书管理系统,能借还书</div>
+            <div class="bubble">好的,需要区分管理员和读者吗?借阅有期限和罚款规则吗?</div>
+            <div class="bubble u">要,30 天,超期每天 0.5 元</div>
+            <div class="bubble" style="border:1.5px solid var(--orange)">需求已清晰 ✓ 即将调用 <span class="mono accent">trigger_generation</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8 · TOOL_CALL REFACTOR (ME) -->
+  <section class="slide" data-slide="toolcall">
+    <div class="kicker reveal">07 · 核心重构</div>
+    <h2 class="title reveal" style="margin-bottom:2px">从 <span class="mono">[READY]</span> 两段式,到标准 <span class="accent">function calling</span></h2>
+    <div class="compare">
+      <div class="col old reveal-left">
+        <h4>✗ 旧方案 · 两段式</h4>
+        <div class="flow-step"><span class="si">1</span>对话 Agent 在文本里输出 <span class="mono">[READY]</span> 魔法标记</div>
+        <div class="flow-step"><span class="si">2</span>后端正则匹配标记,判断是否就绪</div>
+        <div class="flow-step"><span class="si">3</span>再调一次独立 orchestrator Agent 决定派哪些子 Agent</div>
+        <div class="flow-step"><span class="si">✗</span>两次模型调用、标记易误触发、解析脆弱</div>
+      </div>
+      <div class="arrow-mid reveal">→</div>
+      <div class="col new reveal-right">
+        <h4>✓ 新方案 · tool_call 单跳</h4>
+        <div class="flow-step"><span class="si">1</span>对话 Agent 直接调用 <span class="mono">trigger_generation</span> 工具</div>
+        <div class="flow-step"><span class="si">2</span>工具参数自带 <span class="mono">agents[] · summary · reasoning</span></div>
+        <div class="flow-step"><span class="si">3</span>流式 <span class="mono">delta.tool_calls</span> 分片累积 + 一次 <span class="mono">JSON.parse</span></div>
+        <div class="flow-step"><span class="si">✓</span>单次调用 · 决策可审计 · 取消 orchestrator</div>
+      </div>
+    </div>
+    <div class="code reveal"><span class="cm">// 流式 tool_call 分片累积 (conversation-agent.ts)</span><br/>
+<span class="c3">for</span> (<span class="c1">const</span> tc <span class="c3">of</span> delta.<span class="c1">tool_calls</span>) {<br/>
+&nbsp;&nbsp;<span class="c1">const</span> slot = toolCalls.get(tc.index) ?? { <span class="c2">argsBuffer</span>: <span class="c2">""</span> };<br/>
+&nbsp;&nbsp;slot.<span class="c2">argsBuffer</span> += tc.function.arguments;&nbsp;&nbsp;<span class="cm">// 累积 JSON 分片</span><br/>
+&nbsp;&nbsp;toolCalls.set(tc.index, slot);<br/>
+}<br/>
+<span class="cm">// 流结束后一次性解析 → 触发并行生成</span><br/>
+<span class="c1">const</span> args = JSON.<span class="c3">parse</span>(slot.argsBuffer);&nbsp;&nbsp;<span class="c3">yield</span> { type: <span class="c2">"tool_call"</span>, ...args };</div>
+  </section>
+
+  <!-- 9 · PARALLEL ORCHESTRATION (ME) -->
+  <section class="slide" data-slide="parallel">
+    <div class="kicker reveal">08 · 核心</div>
+    <h2 class="title reveal">多 Agent <span class="accent">并行编排</span> · 完成即回传</h2>
+    <p class="lead reveal" style="margin-top:10px"><span class="mono">/api/generate</span> 用 <span class="mono">Promise.all()</span> 同时点火 5 个 Agent;谁先完成谁先 <span class="mono">createDocument</span> 并通过 SSE 推送 <span class="mono">doc_saved</span> —— 用户看到文档逐个"长"出来,而非干等全部完成。单个 Agent 失败不阻塞其它。</p>
+    <div class="lanes reveal-stagger">
+      <div class="lane"><div class="lname">requirement</div><div class="ltrack"><div class="lfill" style="--w:.62">需求分析 ✓</div></div></div>
+      <div class="lane"><div class="lname">design</div><div class="ltrack"><div class="lfill" style="--w:.88">架构图 ✓</div></div></div>
+      <div class="lane"><div class="lname">er</div><div class="ltrack"><div class="lfill" style="--w:.74">ER 图 ✓</div></div></div>
+      <div class="lane"><div class="lname">api</div><div class="ltrack"><div class="lfill" style="--w:1">API 规范 ✓</div></div></div>
+      <div class="lane"><div class="lname">plan</div><div class="ltrack"><div class="lfill" style="--w:.55">发展计划 ✓</div></div></div>
+    </div>
+    <div class="takeaway reveal"><span class="ti">◆</span><div>SSE 事件流:<span class="mono">agent_start → agent_output → doc_saved</span> 逐 Agent 推送,最后 <span class="mono">done</span> 汇总。<b>并行墙钟 = 最慢的那个 Agent,而非五者之和。</b></div></div>
+  </section>
+
+  <!-- 9a · CROSS-AGENT CONTEXT (ME) -->
+  <section class="slide" data-slide="context">
+    <div class="kicker reveal">09 · 核心</div>
+    <h2 class="title reveal">跨 Agent 上下文 · <span class="accent">迭代式增量生成</span></h2>
+    <div class="split">
+      <div class="flist reveal-stagger">
+        <div class="fitem"><div class="fn">↺</div><div><div class="ft">读旧版本作为参考</div><div class="fd">生成前 <span class="mono">getLatestDocument(sessionId,"mermaid")</span> 取出最新架构图 / API spec,注入 design · er · api · requirement 四个 Agent。</div></div></div>
+        <div class="fitem"><div class="fn">演</div><div><div class="ft">演化而非重画</div><div class="fd">Prompt 明确要求"在已有架构图基础上保持结构一致并演化",新需求只增量修改,而不是从零重来。</div></div></div>
+        <div class="fitem"><div class="fn">链</div><div><div class="ft">版本链式追溯</div><div class="fd">每次生成 <span class="mono">version+1</span>、<span class="mono">parentVersionId</span> 指向上一版,完整保留 v1→v2→v3 演化史,可回滚、可对比。</div></div></div>
+      </div>
+      <div class="panel reveal">
+        <div class="lbl" style="font-family:var(--font-heading);font-weight:600;font-size:12px;color:var(--text-muted);letter-spacing:.1em;margin-bottom:16px">文档版本演化链</div>
+        <div class="pipe" style="margin-top:0;gap:0">
+          <div class="node ver-node" style="min-width:200px"><div class="nt">架构图 v1</div><div class="nd mono">parentVersionId: null</div></div>
+          <div class="connector ver-conn"></div>
+          <div class="node ver-node hot" style="min-width:200px"><div class="nt">架构图 v2</div><div class="nd mono">+新增 借阅模块</div></div>
+          <div class="connector ver-conn"></div>
+          <div class="node ver-node" style="min-width:200px"><div class="nt">架构图 v3</div><div class="nd mono">+新增 罚款规则</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9b · VS TRADITIONAL AGENT -->
+  <section class="slide" data-slide="vs">
+    <div class="kicker reveal">10 · 架构对比</div>
+    <h2 class="title reveal" style="margin-bottom:4px">与传统 Agent 架构的<span class="accent">区别</span></h2>
+    <p class="lead reveal" style="margin-top:8px">核心:<b>混合架构</b> —— 对话层是 <b class="accent">agentic</b>(LLM 自主决定何时/生成什么),生成层是 <b class="accent">workflow</b>(确定性并行 fan-out),呼应 Anthropic「Workflow vs Agent」之分。</p>
+    <table class="cmp-table reveal">
+      <thead>
+        <tr><th>维度</th><th>传统 ReAct 自主循环</th><th>传统 Orchestrator + Workers</th><th class="me">CycleMind(本项目)</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>控制流</td><td>单 Agent 自主循环,步数不定</td><td>Planner 规划再派活,多一跳</td><td class="me">对话 1 次决策 + 确定性并行,无循环</td></tr>
+        <tr><td>决策位置</td><td>每轮让模型决定下一步</td><td>专门 orchestrator agent</td><td class="me"><span class="mono">tool_choice:auto</span> 内嵌对话层,砍掉 orchestrator</td></tr>
+        <tr><td>子任务执行</td><td>反复调工具、看结果再决定</td><td>worker 间需协调来回</td><td class="me">5 个专家函数,单次生成,互不通信</td></tr>
+        <tr><td>并发</td><td>串行(依赖上一步结果)</td><td>多为串行 / manager 协调</td><td class="me"><span class="mono">Promise.all()</span> 5 个真并行</td></tr>
+        <tr><td>人类介入</td><td>多为全自主,不确认</td><td>通常不确认</td><td class="me">tool_call → 确认面板 → 用户点确认</td></tr>
+        <tr><td>可预测性/成本</td><td>步数 token 不可控,可能空转</td><td>多跳,较贵</td><td class="me">步数固定 · token 可控 · 无空转</td></tr>
+      </tbody>
+    </table>
+    <div class="takeaway reveal"><span class="ti">◆</span><div>这是一个明确的工程取舍:<b>该放权的地方放权(需求澄清用 LLM 自主),该确定的地方确定(文档生成用并行 workflow)。</b></div></div>
+  </section>
+
+  <!-- 9c · PROS & CONS -->
+  <section class="slide" data-slide="proscons">
+    <div class="kicker reveal">11 · 架构反思</div>
+    <h2 class="title reveal">这套架构的<span class="accent">优点与缺点</span></h2>
+    <div class="pc-grid">
+      <div class="pc-col pros reveal">
+        <h4>✅ 优点</h4>
+        <div class="pc-item"><b>可预测 · 低成本 · 不空转</b>无自主工具循环,步数固定,token 可控,不会死循环烧钱。</div>
+        <div class="pc-item"><b>低延迟并行</b><span class="mono">Promise.all()</span> + SSE 完成即回传,墙钟 = 最慢的 Agent。</div>
+        <div class="pc-item"><b>关注点分离,易迭代</b>6 个职责单一 Agent,可单独调优 / 替换 / 测试。</div>
+        <div class="pc-item"><b>Human-in-the-loop 闸门</b>确认面板防误判生成,省钱且用户可控。</div>
+        <div class="pc-item"><b>单跳决策,可审计 + 健壮</b>结构化 tool_call 取代 <span class="mono">[READY]</span> 正则;<span class="mono">reasoning</span> 存 metadata 可复盘;单 Agent 失败不阻塞其它。</div>
+      </div>
+      <div class="pc-col cons reveal">
+        <h4>⚠️ 缺点(附应对)</h4>
+        <div class="pc-item"><b>子 Agent 一次性,无自纠错</b>单次 completion,质量有天花板。<i>→ 未来加 critique/verify 回路。</i></div>
+        <div class="pc-item"><b>并行文档可能不一致</b>design 与 er 同时生成、看不到对方本轮输出。<i>→ 改半串行或加一致性校对。</i></div>
+        <div class="pc-item"><b>上下文粗粒度</b>仅截断旧文档塞进 Prompt,无结构化共享状态。<i>→ 语义合并 / 结构化传递。</i></div>
+        <div class="pc-item"><b>任务图固定,不通用</b>只支持 5 类文档,处理不了模板外任务。<i>→ 对本领域是有意取舍。</i></div>
+        <div class="pc-item"><b>长会话丢早期上下文</b>历史窗口最近 20 条 × 4k 字符。<i>→ 对话摘要 / RAG 检索补回。</i></div>
+      </div>
+    </div>
+    <div class="takeaway reveal"><span class="ti">◆</span><div>用确定性 workflow 换<b>速度、成本、可复现性</b>,把 LLM 自主性只留在需求澄清环节 —— 缺点已识别,且都有明确演进路线。</div></div>
+  </section>
+
+  <!-- 12 · WORKBENCH (ME) -->
+  <section class="slide" data-slide="workbench">
+    <div class="kicker reveal">12 · 前端工程</div>
+    <h2 class="title reveal">三栏工作台 · GSAP 流畅展开收起</h2>
+    <div class="panel reveal" style="margin-top:24px">
+      <div class="wb">
+        <div class="chat wb-chat"><div class="lbl">ChatPanel</div>
+          <div class="bubble u">借还书系统</div><div class="bubble">需求已清晰,开始生成…</div>
+          <div class="bubble" style="border:1px solid var(--orange);font-size:10px">✓ 已生成 5 份文档</div>
+        </div>
+        <div class="preview wb-preview"><div class="lbl">PreviewPanel</div>
+          <div class="tabrow"><span class="on">架构图</span><span>ER 图</span><span>需求</span><span>API</span><span>计划</span></div>
+          <svg viewBox="0 0 300 150" style="width:100%;height:130px"><g stroke="var(--border-strong)" stroke-width="1.5" fill="none"><rect x="120" y="14" width="60" height="26" rx="6"/><rect x="40" y="80" width="60" height="26" rx="6"/><rect x="200" y="80" width="60" height="26" rx="6"/><path d="M140 40 L70 80 M160 40 L230 80"/></g><g font-size="9" font-family="monospace" fill="var(--text-secondary)" text-anchor="middle"><text x="150" y="31">前端</text><text x="70" y="97">API</text><text x="230" y="97">DB</text></g></svg>
+        </div>
+        <div class="think wb-think"><div class="lbl">思维链</div>
+          <div class="thinkline on"></div><div class="thinkline on"></div><div class="thinkline"></div><div class="thinkline on"></div><div class="thinkline"></div>
+        </div>
+      </div>
+    </div>
+    <div class="takeaway reveal"><span class="ti">◆</span><div>展开/收起时 GSAP 同步动画 <span class="mono">flex + width + opacity</span> 三属性 (0.4s · power2.out),预览面板可一键收起让对话全屏</div></div>
+  </section>
+
+  <!-- 12 · MERMAID RENDERER (ME) -->
+  <section class="slide" data-slide="mermaid">
+    <div class="kicker reveal">13 · 前端工程</div>
+    <h2 class="title reveal">Mermaid 渲染器 · 缩放平移交互</h2>
+    <div class="grid g3 reveal-stagger">
+      <div class="card"><div class="bignum">2MB<small>首包节省</small></div><h3 style="margin-top:14px"><span class="ico">📦</span>动态 import</h3><p>Mermaid 约 2MB,用 <span class="mono">import("mermaid")</span> 在 useEffect 内按需加载,绝不进首屏 bundle。</p></div>
+      <div class="card"><div class="bignum">0.1×–10×<small>缩放区间</small></div><h3 style="margin-top:14px"><span class="ico">🔍</span>滚轮缩放 + 拖拽平移</h3><p>基于 CSS <span class="mono">transform: translate + scale</span>,非 DOM 操作,复杂图也丝滑。带当前缩放百分比与一键复位。</p></div>
+      <div class="card"><div class="bignum">SVG<small>一键导出</small></div><h3 style="margin-top:14px"><span class="ico">⬇</span>导出 + 容错</h3><p>图表可导出 SVG;语法错误有 fallback 边界展示;<span class="mono">cancelled</span> 标志防卸载内存泄漏。</p></div>
+    </div>
+    <div class="takeaway reveal"><span class="ti">◆</span><div>客户端渲染 (<span class="mono">ssr:false</span>) —— 把渲染压力放到浏览器,服务端零负担,大图交互依旧 60fps。</div></div>
+  </section>
+
+  <!-- 13 · MARKDOWN RENDERER (ME) -->
+  <section class="slide" data-slide="markdown">
+    <div class="kicker reveal">14 · 前端工程</div>
+    <h2 class="title reveal">Markdown 渲染器 · 流式高亮不卡顿</h2>
+    <div class="flist reveal-stagger">
+      <div class="fitem"><div class="fn">md</div><div><div class="ft">react-markdown + remark-gfm + remark-breaks</div><div class="fd">完整 GitHub 风格 Markdown,表格、任务列表、软换行全支持,需求 / API / 计划文档统一渲染。</div></div></div>
+      <div class="fitem"><div class="fn">{}</div><div><div class="ft">Shiki 异步语法高亮</div><div class="fd">代码块用 Shiki 异步高亮,配暖色调主题;行内 code 与 block code 区分处理。</div></div></div>
+      <div class="fitem"><div class="fn">⚡</div><div><div class="ft">Block 级 memoization</div><div class="fd">按 Markdown block 切分 + React.memo —— 流式追加新内容时只重渲染变化的块,长文档边写边渲染依旧流畅。</div></div></div>
+    </div>
+  </section>
+
+  <!-- 14 · GENERATION STORE (ME) -->
+  <section class="slide" data-slide="store">
+    <div class="kicker reveal">15 · 架构亮点</div>
+    <h2 class="title reveal">全局生成 Store · <span class="accent">切页面也不中断</span></h2>
+    <div class="split">
+      <div class="flist reveal-stagger">
+        <div class="fitem"><div class="fn">⚡</div><div><div class="ft">SSE reader 脱离组件生命周期</div><div class="fd">SSE 读取循环是 Zustand store 里的 fire-and-forget 异步闭包,<b>不依赖任何 React 组件挂载</b> —— 用户切到别的会话、甚至离开工作台,后台生成照常进行。</div></div></div>
+        <div class="fitem"><div class="fn">🗺</div><div><div class="ft">Map&lt;sessionId, Run&gt; 多会话并发</div><div class="fd">每个会话一条 <span class="mono">GenerationRun</span>(状态 / 步骤 / 各 Agent 进度 / 完成文档),多个生成任务互不干扰。</div></div></div>
+        <div class="fitem"><div class="fn">⛔</div><div><div class="ft">AbortController 随时取消</div><div class="fd">每条 Run 持有 AbortController,用户可中途取消;组件重新挂载时直接读 <span class="mono">runs.get(sessionId)</span> 续上进度。</div></div></div>
+      </div>
+      <div class="panel reveal">
+        <div class="code" style="margin-top:0"><span class="cm">// stores/generation-store.ts</span><br/>
+<span class="c1">interface</span> <span class="c2">GenerationRun</span> {<br/>
+&nbsp;&nbsp;sessionId: <span class="c2">string</span>;<br/>
+&nbsp;&nbsp;status: <span class="c2">"running"|"completed"|"error"</span>;<br/>
+&nbsp;&nbsp;streamSteps: <span class="c2">StreamStep[]</span>;<br/>
+&nbsp;&nbsp;agentToolParts: <span class="c3">Map</span>&lt;string, AgentPart&gt;;<br/>
+&nbsp;&nbsp;completedDocs: <span class="c2">string[]</span>;<br/>
+&nbsp;&nbsp;abortController: <span class="c2">AbortController</span> | null;<br/>
+}<br/>
+<span class="cm">// runs: Map&lt;sessionId, GenerationRun&gt;</span><br/>
+<span class="cm">// 全局对象 · 跨页面持久 · 独立于 React</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 15 · CROSS-PAGE NOTIFY (ME) -->
+  <section class="slide" data-slide="notify">
+    <div class="kicker reveal">16 · 全局体验</div>
+    <h2 class="title reveal">跨页面通知 · GenerationWatcher</h2>
+    <div class="split">
+      <div class="flist reveal-stagger">
+        <div class="fitem"><div class="fn">👁</div><div><div class="ft">监视器订阅 store 变化</div><div class="fd"><span class="mono">GenerationWatcher</span> 挂在根布局,订阅生成 store;无论当前在哪个页面,都能感知后台生成的完成/失败。</div></div></div>
+        <div class="fitem"><div class="fn">🔔</div><div><div class="ft">Sonner Toast 实时弹窗</div><div class="fd">生成完成弹出 Toast,带完成详情(生成了哪几份文档)+ 一键跳转链接,用唯一 sessionId 防止 Toast 堆叠。</div></div></div>
+        <div class="fitem"><div class="fn">↩</div><div><div class="ft">无缝回到现场</div><div class="fd">点击通知直达对应会话工作台,预览面板已是最新版本 —— 真正的"后台生成 + 前台提醒"闭环。</div></div></div>
+      </div>
+      <div class="panel reveal" style="display:flex;flex-direction:column;gap:12px;justify-content:center">
+        <div class="card" style="border-color:var(--orange);box-shadow:0 0 0 3px rgba(217,119,87,.1)"><h3><span class="ico">✓</span>生成完成</h3><p>「图书管理系统」已生成 <b>架构图 · ER 图 · 需求 · API · 计划</b> 5 份文档 →&nbsp;<span class="accent mono">点击查看</span></p></div>
+        <div class="lead" style="font-size:12px;text-align:center;color:var(--text-muted)">即便你正在另一个会话里聊天,这条通知也会准时弹出</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 16 · TEAMMATE 徐健皓 -->
+  <section class="slide" data-slide="teammate1">
+    <div class="kicker reveal">17 · 团队协作 · 徐健皓</div>
+    <h2 class="title reveal">优化与运维 · 让系统跑得稳</h2>
+    <div class="grid g2 reveal-stagger">
+      <div class="card"><h3><span class="ico">🗂</span>数据库索引优化</h3><p>为 sessions / documents / messages 的外键建立索引,会话列表、文档检索、消息查询从 O(n) 降到 O(log n)。</p></div>
+      <div class="card"><h3><span class="ico">📚</span>append-only 版本管理</h3><p><span class="mono">parentVersionId</span> 链式版本追溯落地:文档只新增不覆盖,完整保留演化历史,支持回滚与对比。</p></div>
+      <div class="card"><h3><span class="ico">📈</span>Vercel Analytics 集成</h3><p>接入访问与性能分析,持续监控线上真实用户体验数据。</p></div>
+      <div class="card"><h3><span class="ico">🛡</span>输入边界控制</h3><p>用户输入 10k 字符上限;历史窗口仅取最近 20 条、每条裁剪到 4k 字符 —— 守住 DeepSeek 上下文窗口,防止超长崩溃。</p></div>
+    </div>
+  </section>
+
+  <!-- 17 · TEAMMATE 任增宇 -->
+  <section class="slide" data-slide="teammate2">
+    <div class="kicker reveal">18 · 团队协作 · 任增宇</div>
+    <h2 class="title reveal">前端 UI 与文档内容</h2>
+    <div class="grid g2 reveal-stagger">
+      <div class="card"><h3><span class="ico">🧠</span>持久化思维链组件</h3><p>展示每个 Agent 的执行元数据(步骤 / 工具 / 生成类型),让 AI 的"思考过程"可视化、可回看。</p></div>
+      <div class="card"><h3><span class="ico">🧱</span>基础组件库</h3><p>Avatar / Button / Message / CodeBlock / PromptInput / Tooltip / ChatContainer / ScrollButton 等十余个可复用组件。</p></div>
+      <div class="card"><h3><span class="ico">🎨</span>品牌设计</h3><p>Logo、Funnel Display 字体、Anthropic 风格 landing page、背景装饰 SVG —— 整体视觉调性。</p></div>
+      <div class="card"><h3><span class="ico">📖</span>文档与内容</h3><p>ARCH.md 14 节完整架构文档 + README 项目介绍 + 5 篇技术博客(API 设计 / 性能 / 需求 / 测试 / 协作)。</p></div>
+    </div>
+  </section>
+
+  <!-- 18 · INNOVATION SUMMARY -->
+  <section class="slide" data-slide="summary">
+    <div class="kicker reveal">19 · 总结</div>
+    <h2 class="title reveal">五大创新点 · 与现场提问</h2>
+    <div class="flist reveal-stagger">
+      <div class="fitem"><div class="fn">①</div><div><div class="ft">LLM tool_call 智能编排</div><div class="fd">对话 Agent 用标准 function calling 自主决定派哪些子 Agent,取代脆弱的 [READY] 标记 + orchestrator 两段式。</div></div></div>
+      <div class="fitem"><div class="fn">②</div><div><div class="ft">全局后台生成 + 实时通知</div><div class="fd">SSE reader 脱离 React 生命周期,切页面不中断;GenerationWatcher + Toast 完成即提醒。</div></div></div>
+      <div class="fitem"><div class="fn">③</div><div><div class="ft">对话式需求澄清自动触发</div><div class="fd">不用点按钮 —— AI 边聊边判断需求是否就绪,时机成熟自动发起生成。</div></div></div>
+      <div class="fitem"><div class="fn">④</div><div><div class="ft">append-only 版本演化</div><div class="fd">文档只增不覆盖,Design/ER Agent 读旧版增量演化,完整保留设计演化史。</div></div></div>
+      <div class="fitem"><div class="fn">⑤</div><div><div class="ft">用户画像注入个性化</div><div class="fd"><span class="mono">user.md</span> 个人配置注入系统 Prompt,输出贴合个人偏好。</div></div></div>
+    </div>
+    <div class="takeaway reveal" style="margin-top:22px"><span class="ti">◆</span><div style="font-family:var(--font-display);font-size:18px"><b>感谢聆听 —— 欢迎提问。</b>&nbsp;&nbsp;CycleMind · 让设计文档随对话一起生长。</div></div>
+  </section>
+
+</div>
+
+<div class="pager"><b id="cur">01</b> / <span id="total">18</span></div>
+<div class="hint"><kbd>←</kbd> <kbd>→</kbd> / <kbd>Space</kbd> 翻页 · <kbd>F</kbd> 全屏</div>
+
+<script>
+const slides = Array.from(document.querySelectorAll('.slide'));
+const total = slides.length;
+let idx = 0;
+document.getElementById('total').textContent = String(total).padStart(2,'0');
+
+function pad(n){return String(n).padStart(2,'0');}
+
+function animateSlide(slide){
+  const tl = gsap.timeline();
+  // base reveal (自下而上淡入)
+  const reveals = slide.querySelectorAll('.reveal');
+  if(reveals.length) tl.fromTo(reveals,{y:26,opacity:0},{y:0,opacity:1,duration:.6,ease:'power3.out',stagger:.09},0);
+
+  // staggered groups
+  slide.querySelectorAll('.reveal-stagger').forEach(group=>{
+    const kids = group.children.length?group.children:[group];
+    tl.fromTo(kids,{y:30,opacity:0,scale:.98},{y:0,opacity:1,scale:1,duration:.55,ease:'power3.out',stagger:.08},.15);
+  });
+  // left / right slide-ins (compare columns)
+  const left = slide.querySelectorAll('.reveal-left');
+  const right = slide.querySelectorAll('.reveal-right');
+  if(left.length) tl.fromTo(left,{x:-40,opacity:0},{x:0,opacity:1,duration:.6,ease:'power3.out'},.2);
+  if(right.length) tl.fromTo(right,{x:40,opacity:0},{x:0,opacity:1,duration:.6,ease:'power3.out'},.3);
+
+  const id = slide.dataset.slide;
+
+  // ── per-slide special timelines ──
+  if(id==='cover'){
+    tl.fromTo('.cover-deco',{opacity:0},{opacity:.12,duration:1.1,ease:'power2.out'},.1);
+  }
+  if(id==='arch'){
+    const nodes = slide.querySelectorAll('.arch-node');
+    const conns = slide.querySelectorAll('.arch-conn');
+    tl.fromTo(nodes,{y:24,opacity:0},{y:0,opacity:1,duration:.4,ease:'power2.out',stagger:.13},.1);
+    tl.fromTo(conns,{scaleY:0},{scaleY:1,duration:.22,ease:'none',stagger:.13},.22);
+  }
+  if(id==='context'){
+    const vn = slide.querySelectorAll('.ver-node');
+    const vc = slide.querySelectorAll('.ver-conn');
+    tl.fromTo(vn,{scale:.8,opacity:0},{scale:1,opacity:1,duration:.4,ease:'back.out(1.5)',stagger:.25},.3);
+    tl.fromTo(vc,{scaleY:0},{scaleY:1,duration:.25,stagger:.25},.5);
+  }
+  if(id==='parallel'){
+    const fills = slide.querySelectorAll('.lfill');
+    fills.forEach(f=>{
+      tl.fromTo(f,{scaleX:0},{scaleX:parseFloat(f.style.getPropertyValue('--w'))||1,duration:.9,ease:'power2.out'},'<+0.12');
+    });
+  }
+  if(id==='workbench'){
+    tl.fromTo('.wb-chat',{x:-20,opacity:0},{x:0,opacity:1,duration:.5},.2)
+      .fromTo('.wb-preview',{scaleX:.85,opacity:0,transformOrigin:'left'},{scaleX:1,opacity:1,duration:.55,ease:'power3.out'},.35)
+      .fromTo('.wb-think',{x:20,opacity:0},{x:0,opacity:1,duration:.5},.5)
+      .fromTo('.wb-preview svg',{opacity:0},{opacity:1,duration:.4},.6);
+  }
+  return tl;
+}
+
+function show(n){
+  n = Math.max(0, Math.min(total-1, n));
+  slides[idx].classList.remove('active');
+  idx = n;
+  const s = slides[idx];
+  s.classList.add('active');
+  gsap.set(s,{opacity:1});
+  animateSlide(s);
+  document.getElementById('pbar').style.width = ((idx+1)/total*100)+'%';
+  document.getElementById('cur').textContent = pad(idx+1);
+}
+function next(){ if(idx<total-1) show(idx+1); }
+function prev(){ if(idx>0) show(idx-1); }
+
+document.addEventListener('keydown',e=>{
+  if(['ArrowRight','PageDown',' '].includes(e.key)){e.preventDefault();next();}
+  else if(['ArrowLeft','PageUp'].includes(e.key)){e.preventDefault();prev();}
+  else if(e.key==='Home'){show(0);}
+  else if(e.key==='End'){show(total-1);}
+  else if(e.key==='f'||e.key==='F'){ if(!document.fullscreenElement) document.documentElement.requestFullscreen(); else document.exitFullscreen(); }
+});
+
+show(0);
+</script>
+</body>
+</html>
