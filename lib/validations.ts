@@ -54,3 +54,7 @@ export const sendMessageSchema = z.object({
 export const updateUserMdSchema = z.object({
   userMd: z.string().max(50000),
 });
+
+export const inviteShareSchema = z.object({
+  email: z.email("请输入有效的邮箱地址"),
+});

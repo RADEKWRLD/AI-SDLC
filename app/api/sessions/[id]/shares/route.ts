@@ -1,9 +1,12 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getSessionById } from "@/lib/db/queries/sessions";
-import { canViewSession } from "@/lib/db/queries/shares";
-import { getSessionDocuments, createDocument } from "@/lib/db/queries/documents";
-import { createDocumentSchema } from "@/lib/validations";
+import {
+  getSessionShares,
+  addShareByEmail,
+  getShareLink,
+} from "@/lib/db/queries/shares";
+import { inviteShareSchema } from "@/lib/validations";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
@@ -13,12 +16,16 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
   const { id } = await params;
   const sessionData = await getSessionById(id);
-  if (!sessionData || !(await canViewSession(session.user.id, id))) {
+  // 仅 owner 可管理分享
+  if (!sessionData || sessionData.userId !== session.user.id) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  const documents = await getSessionDocuments(id);
-  return NextResponse.json({ documents });
+  const [members, link] = await Promise.all([
+    getSessionShares(id),
+    getShareLink(id),
+  ]);
+  return NextResponse.json({ members, link });
 }
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -40,11 +47,18 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const parsed = createDocumentSchema.safeParse(body);
+  const parsed = inviteShareSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.issues }, { status: 400 });
+    return NextResponse.json({ error: "Invalid data" }, { status: 400 });
   }
 
-  const doc = await createDocument({ sessionId: id, ...parsed.data });
-  return NextResponse.json({ document: doc }, { status: 201 });
+  const result = await addShareByEmail(id, session.user.id, parsed.data.email);
+  if (!result.ok) {
+    const message =
+      result.reason === "not_found" ? "该邮箱尚未注册" : "无法分享给项目所有者";
+    return NextResponse.json({ error: message }, { status: 400 });
+  }
+
+  const members = await getSessionShares(id);
+  return NextResponse.json({ members }, { status: 201 });
 }

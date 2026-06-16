@@ -53,3 +53,29 @@ export type AgentConfirmationItem = {
   description: string;
   enabled: boolean;
 };
+
+export type SessionRole = "owner" | "viewer";
+
+export type ShareMember = {
+  id: string;
+  userId: string;
+  name: string | null;
+  email: string;
+  role: "view";
+  createdAt: Date;
+};
+
+export type ShareLink = {
+  id: string;
+  sessionId: string;
+  token: string;
+  role: "view";
+  expiresAt: Date | null;
+  createdAt: Date;
+};
+
+// 「分享给我的」列表项 (附 owner 信息)
+export type SharedSession = Session & {
+  ownerName: string | null;
+  ownerEmail: string;
+};

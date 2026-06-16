@@ -22,10 +22,11 @@ const isMermaidTab = (key: TabKey) => key === "mermaid" || key === "er";
 
 interface PreviewPanelProps {
   documents: Record<string, Document | null>;
-  onSaveDocument: (type: TabKey, content: string) => Promise<void>;
+  onSaveDocument?: (type: TabKey, content: string) => Promise<void>;
+  readOnly?: boolean;
 }
 
-export function PreviewPanel({ documents, onSaveDocument }: PreviewPanelProps) {
+export function PreviewPanel({ documents, onSaveDocument, readOnly = false }: PreviewPanelProps) {
   const [activeTab, setActiveTab] = useState<TabKey>("mermaid");
   const [viewMode, setViewMode] = useState<"preview" | "edit">("preview");
   const [editContent, setEditContent] = useState("");
@@ -41,6 +42,7 @@ export function PreviewPanel({ documents, onSaveDocument }: PreviewPanelProps) {
   }
 
   async function handleSave() {
+    if (!onSaveDocument) return;
     setSaving(true);
     await onSaveDocument(activeTab, editContent);
     setViewMode("preview");
@@ -110,14 +112,16 @@ export function PreviewPanel({ documents, onSaveDocument }: PreviewPanelProps) {
           >
             <Eye className="h-4 w-4" />
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={switchToEdit}
-            className={viewMode === "edit" ? "bg-[var(--secondary)]" : ""}
-          >
-            <Code className="h-4 w-4" />
-          </Button>
+          {!readOnly && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={switchToEdit}
+              className={viewMode === "edit" ? "bg-[var(--secondary)]" : ""}
+            >
+              <Code className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       </div>
 

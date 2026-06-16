@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getSessionById, updateSession, deleteSession } from "@/lib/db/queries/sessions";
+import { canViewSession } from "@/lib/db/queries/shares";
 import { updateSessionSchema } from "@/lib/validations";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -11,11 +12,12 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
   const { id } = await params;
   const sessionData = await getSessionById(id);
-  if (!sessionData || sessionData.userId !== session.user.id) {
+  if (!sessionData || !(await canViewSession(session.user.id, id))) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  return NextResponse.json({ session: sessionData });
+  const role = sessionData.userId === session.user.id ? "owner" : "viewer";
+  return NextResponse.json({ session: sessionData, role });
 }
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {

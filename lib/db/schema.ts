@@ -9,6 +9,7 @@ import {
   primaryKey,
   boolean,
   index,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
@@ -42,6 +43,9 @@ export const diagramTypeEnum = pgEnum("diagram_type", [
   "class",
   "other",
 ]);
+
+// 分享角色 (目前仅 view, 预留 comment/edit 扩展)
+export const shareRoleEnum = pgEnum("share_role", ["view"]);
 
 // ==================== AUTH TABLES ====================
 
@@ -143,6 +147,35 @@ export const messages = pgTable("messages", {
   index("messages_session_id_idx").on(t.sessionId),
 ]);
 
+// 邀请已注册成员协作 (仅查看)
+export const sessionShares = pgTable("session_shares", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  sessionId: uuid("session_id")
+    .notNull()
+    .references(() => sessions.id, { onDelete: "cascade" }),
+  sharedWithUserId: uuid("shared_with_user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  role: shareRoleEnum("role").default("view").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => [
+  index("session_shares_session_idx").on(t.sessionId),
+  index("session_shares_user_idx").on(t.sharedWithUserId),
+  uniqueIndex("session_shares_unique").on(t.sessionId, t.sharedWithUserId),
+]);
+
+// 分享链接 (token, 任何人凭链接可只读访问)
+export const shareLinks = pgTable("share_links", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  sessionId: uuid("session_id")
+    .notNull()
+    .references(() => sessions.id, { onDelete: "cascade" }),
+  token: text("token").notNull().unique(),
+  role: shareRoleEnum("role").default("view").notNull(),
+  expiresAt: timestamp("expires_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const templates = pgTable("templates", {
   id: uuid("id").defaultRandom().primaryKey(),
   name: text("name").notNull(),
@@ -164,6 +197,26 @@ export const sessionsRelations = relations(sessions, ({ one, many }) => ({
   user: one(users, { fields: [sessions.userId], references: [users.id] }),
   documents: many(documents),
   messages: many(messages),
+  shares: many(sessionShares),
+  shareLinks: many(shareLinks),
+}));
+
+export const sessionSharesRelations = relations(sessionShares, ({ one }) => ({
+  session: one(sessions, {
+    fields: [sessionShares.sessionId],
+    references: [sessions.id],
+  }),
+  sharedWithUser: one(users, {
+    fields: [sessionShares.sharedWithUserId],
+    references: [users.id],
+  }),
+}));
+
+export const shareLinksRelations = relations(shareLinks, ({ one }) => ({
+  session: one(sessions, {
+    fields: [shareLinks.sessionId],
+    references: [sessions.id],
+  }),
 }));
 
 export const documentsRelations = relations(documents, ({ one }) => ({

@@ -33,16 +33,19 @@ import type { Session } from "@/types";
 interface ProjectCardProps {
   session: Session;
   statusLabel: Record<string, string>;
-  onRequestEdit: (session: Session) => void;
-  onDelete: (id: string) => Promise<void>;
+  onRequestEdit?: (session: Session) => void;
+  onDelete?: (id: string) => Promise<void>;
+  readOnly?: boolean;
+  ownerLabel?: string;
 }
 
-export function ProjectCard({ session, statusLabel, onRequestEdit, onDelete }: ProjectCardProps) {
+export function ProjectCard({ session, statusLabel, onRequestEdit, onDelete, readOnly = false, ownerLabel }: ProjectCardProps) {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState("");
 
   async function handleDelete() {
+    if (!onDelete) return;
     setDeleting(true);
     setError("");
     try {
@@ -73,30 +76,33 @@ export function ProjectCard({ session, statusLabel, onRequestEdit, onDelete }: P
           <CardContent>
             <div className="flex items-center justify-between">
               <p className="text-xs text-[var(--muted-foreground)]">
+                {ownerLabel ? `${ownerLabel} · ` : ""}
                 {formatDistanceToNow(new Date(session.createdAt), {
                   addSuffix: true,
                   locale: zhCN,
                 })}
               </p>
-              <DropdownMenu>
-                <DropdownMenuTrigger className="rounded-md p-1 hover:bg-[var(--accent)] transition-colors">
-                  <MoreHorizontal className="h-4 w-4 text-[var(--muted-foreground)]" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem onClick={() => onRequestEdit(session)}>
-                    <Pencil className="h-4 w-4" />
-                    编辑
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    className="text-[var(--destructive)]"
-                    onClick={() => setDeleteOpen(true)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    删除
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              {!readOnly && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="rounded-md p-1 hover:bg-[var(--accent)] transition-colors">
+                    <MoreHorizontal className="h-4 w-4 text-[var(--muted-foreground)]" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem onClick={() => onRequestEdit?.(session)}>
+                      <Pencil className="h-4 w-4" />
+                      编辑
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      className="text-[var(--destructive)]"
+                      onClick={() => setDeleteOpen(true)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      删除
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </div>
           </CardContent>
         </Card>

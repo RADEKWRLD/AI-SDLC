@@ -2,12 +2,13 @@
 
 import { useEffect, useState, useCallback, useRef, use } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, PanelRightOpen, PanelRightClose } from "lucide-react";
+import { ArrowLeft, PanelRightOpen, PanelRightClose, Share2 } from "lucide-react";
 import gsap from "gsap";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/layout/header";
 import { ChatPanel } from "@/components/workspace/chat-panel";
 import { PreviewPanel } from "@/components/workspace/preview-panel";
+import { ShareDialog } from "@/components/workspace/share-dialog";
 import { useGenerationStore } from "@/stores/generation-store";
 import { AGENT_LABELS, AGENT_DESCRIPTIONS } from "@/lib/ai/agent-meta";
 import type { Session, Message, Document, AgentConfirmationItem } from "@/types";
@@ -34,8 +35,11 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
     prompt: string;
   } | null>(null);
   const [previewOpen, setPreviewOpen] = useState(true);
+  const [role, setRole] = useState<"owner" | "viewer">("owner");
+  const [shareOpen, setShareOpen] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
   const chatRef = useRef<HTMLDivElement>(null);
+  const isViewer = role === "viewer";
 
   // Generation state from global store (survives page navigation)
   const generationRun = useGenerationStore((s) => s.runs.get(id));
@@ -57,6 +61,7 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
     if (sessionRes.ok) {
       const data = await sessionRes.json();
       setSession(data.session);
+      if (data.role) setRole(data.role);
     }
     if (messagesRes.ok) {
       const data = await messagesRes.json();
@@ -328,14 +333,25 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
             </span>
           )}
         </div>
-        <Button variant="ghost" size="sm" onClick={togglePreview}>
-          {previewOpen ? (
-            <PanelRightClose className="h-4 w-4" />
-          ) : (
-            <PanelRightOpen className="h-4 w-4" />
+        <div className="flex items-center gap-1">
+          {!isViewer && (
+            <Button variant="ghost" size="sm" onClick={() => setShareOpen(true)}>
+              <Share2 className="h-4 w-4 mr-1" />
+              分享
+            </Button>
           )}
-        </Button>
+          <Button variant="ghost" size="sm" onClick={togglePreview}>
+            {previewOpen ? (
+              <PanelRightClose className="h-4 w-4" />
+            ) : (
+              <PanelRightOpen className="h-4 w-4" />
+            )}
+          </Button>
+        </div>
       </div>
+      {!isViewer && (
+        <ShareDialog sessionId={id} open={shareOpen} onOpenChange={setShareOpen} />
+      )}
       <div className="flex-1 flex min-h-0">
         <div
           ref={chatRef}
@@ -354,6 +370,7 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
             pendingConfirmation={pendingConfirmation}
             onConfirm={handleConfirm}
             onCancel={handleCancel}
+            readOnly={isViewer}
           />
         </div>
         <div
@@ -364,6 +381,7 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
           <PreviewPanel
             documents={documents}
             onSaveDocument={handleSaveDocument}
+            readOnly={isViewer}
           />
         </div>
       </div>

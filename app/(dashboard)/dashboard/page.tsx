@@ -7,10 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { ProjectCard } from "@/components/dashboard/project-card";
-import type { Session } from "@/types";
+import type { Session, SharedSession } from "@/types";
 
 export default function DashboardPage() {
   const [sessions, setSessions] = useState<Session[]>([]);
+  const [sharedSessions, setSharedSessions] = useState<SharedSession[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Unified form dialog: editingSession === null means "create", otherwise "edit"
@@ -23,6 +24,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     fetchSessions();
+    fetchSharedSessions();
   }, []);
 
   function openCreate() {
@@ -56,6 +58,14 @@ export default function DashboardPage() {
       setSessions(data.sessions);
     }
     setLoading(false);
+  }
+
+  async function fetchSharedSessions() {
+    const res = await fetch("/api/sessions/shared");
+    if (res.ok) {
+      const data = await res.json();
+      setSharedSessions(data.sessions);
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -172,6 +182,26 @@ export default function DashboardPage() {
                 onDelete={handleDelete}
               />
             ))}
+          </div>
+        )}
+
+        {sharedSessions.length > 0 && (
+          <div className="mt-12">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold tracking-tight">分享给我的</h2>
+              <p className="text-[var(--muted-foreground)] mt-1">其他成员分享给你的项目（仅查看）</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {sharedSessions.map((s) => (
+                <ProjectCard
+                  key={s.id}
+                  session={s}
+                  statusLabel={statusLabel}
+                  readOnly
+                  ownerLabel={`来自 ${s.ownerName || s.ownerEmail}`}
+                />
+              ))}
+            </div>
           </div>
         )}
       </div>

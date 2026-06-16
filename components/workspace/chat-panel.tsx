@@ -38,9 +38,10 @@ interface ChatPanelProps {
   pendingConfirmation?: { agents: AgentConfirmationItem[]; prompt: string } | null;
   onConfirm?: (selectedIds: string[]) => void;
   onCancel?: () => void;
+  readOnly?: boolean;
 }
 
-export function ChatPanel({ sessionId, messages, onSend, isSending, isChatting = false, streamingText = "", streamSteps = [], agentToolParts = new Map(), pendingConfirmation, onConfirm, onCancel }: ChatPanelProps) {
+export function ChatPanel({ sessionId, messages, onSend, isSending, isChatting = false, streamingText = "", streamSteps = [], agentToolParts = new Map(), pendingConfirmation, onConfirm, onCancel, readOnly = false }: ChatPanelProps) {
   const [input, setInput] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
@@ -197,6 +198,11 @@ export function ChatPanel({ sessionId, messages, onSend, isSending, isChatting =
       </ChatContainerRoot>
 
       {/* Input */}
+      {readOnly ? (
+        <div className="p-4 bg-card text-center text-xs text-muted-foreground">
+          只读模式 · 你被分享了此项目，仅可查看
+        </div>
+      ) : (
       <div className="p-4 bg-card">
         <PromptInput
           value={input}
@@ -226,6 +232,7 @@ export function ChatPanel({ sessionId, messages, onSend, isSending, isChatting =
           </PromptInputActions>
         </PromptInput>
       </div>
+      )}
     </div>
   );
 }
