@@ -514,7 +514,7 @@ h2.title{font-family:var(--font-display);font-weight:600;font-size:clamp(2rem,3.
 
   <!-- 12 · WORKBENCH (ME) -->
   <section class="slide" data-slide="workbench">
-    <div class="kicker reveal">12 · 前端工程</div>
+    <div class="kicker reveal">12 · 团队协作 · 任增宇</div>
     <h2 class="title reveal">三栏工作台 · GSAP 流畅展开收起</h2>
     <div class="panel reveal" style="margin-top:24px">
       <div class="wb">
@@ -536,7 +536,7 @@ h2.title{font-family:var(--font-display);font-weight:600;font-size:clamp(2rem,3.
 
   <!-- 12 · MERMAID RENDERER (ME) -->
   <section class="slide" data-slide="mermaid">
-    <div class="kicker reveal">13 · 前端工程</div>
+    <div class="kicker reveal">13 · 团队协作 · 任增宇</div>
     <h2 class="title reveal">Mermaid 渲染器 · 缩放平移交互</h2>
     <div class="grid g3 reveal-stagger">
       <div class="card"><div class="bignum">2MB<small>首包节省</small></div><h3 style="margin-top:14px"><span class="ico">📦</span>动态 import</h3><p>Mermaid 约 2MB,用 <span class="mono">import("mermaid")</span> 在 useEffect 内按需加载,绝不进首屏 bundle。</p></div>
@@ -548,7 +548,7 @@ h2.title{font-family:var(--font-display);font-weight:600;font-size:clamp(2rem,3.
 
   <!-- 13 · MARKDOWN RENDERER (ME) -->
   <section class="slide" data-slide="markdown">
-    <div class="kicker reveal">14 · 前端工程</div>
+    <div class="kicker reveal">14 · 团队协作 · 任增宇</div>
     <h2 class="title reveal">Markdown 渲染器 · 流式高亮不卡顿</h2>
     <div class="flist reveal-stagger">
       <div class="fitem"><div class="fn">md</div><div><div class="ft">react-markdown + remark-gfm + remark-breaks</div><div class="fd">完整 GitHub 风格 Markdown,表格、任务列表、软换行全支持,需求 / API / 计划文档统一渲染。</div></div></div>
@@ -559,7 +559,7 @@ h2.title{font-family:var(--font-display);font-weight:600;font-size:clamp(2rem,3.
 
   <!-- 14 · GENERATION STORE (ME) -->
   <section class="slide" data-slide="store">
-    <div class="kicker reveal">15 · 架构亮点</div>
+    <div class="kicker reveal">15 · 团队协作 · 任增宇</div>
     <h2 class="title reveal">全局生成 Store · <span class="accent">切页面也不中断</span></h2>
     <div class="split">
       <div class="flist reveal-stagger">
@@ -585,7 +585,7 @@ h2.title{font-family:var(--font-display);font-weight:600;font-size:clamp(2rem,3.
 
   <!-- 15 · CROSS-PAGE NOTIFY (ME) -->
   <section class="slide" data-slide="notify">
-    <div class="kicker reveal">16 · 全局体验</div>
+    <div class="kicker reveal">16 · 团队协作 · 任增宇</div>
     <h2 class="title reveal">跨页面通知 · GenerationWatcher</h2>
     <div class="split">
       <div class="flist reveal-stagger">
@@ -600,33 +600,59 @@ h2.title{font-family:var(--font-display);font-weight:600;font-size:clamp(2rem,3.
     </div>
   </section>
 
-  <!-- 16 · TEAMMATE 徐健皓 -->
-  <section class="slide" data-slide="teammate1">
+  <!-- 16a · TEAMMATE 徐健皓 — ① 数据库索引优化 -->
+  <section class="slide" data-slide="opt-index">
     <div class="kicker reveal">17 · 团队协作 · 徐健皓</div>
-    <h2 class="title reveal">优化与运维 · 让系统跑得稳</h2>
-    <div class="grid g2 reveal-stagger">
-      <div class="card"><h3><span class="ico">🗂</span>数据库索引优化</h3><p>为 sessions / documents / messages 的外键建立索引,会话列表、文档检索、消息查询从 O(n) 降到 O(log n)。</p></div>
-      <div class="card"><h3><span class="ico">📚</span>append-only 版本管理</h3><p><span class="mono">parentVersionId</span> 链式版本追溯落地:文档只新增不覆盖,完整保留演化历史,支持回滚与对比。</p></div>
-      <div class="card"><h3><span class="ico">📈</span>Vercel Analytics 集成</h3><p>接入访问与性能分析,持续监控线上真实用户体验数据。</p></div>
-      <div class="card"><h3><span class="ico">🛡</span>输入边界控制</h3><p>用户输入 10k 字符上限;历史窗口仅取最近 20 条、每条裁剪到 4k 字符 —— 守住 DeepSeek 上下文窗口,防止超长崩溃。</p></div>
+    <h2 class="title reveal">数据库索引优化 · 查询恒定 O(log n)</h2>
+    <p class="lead reveal">用户的项目越来越多,每个项目下还挂着成堆的文档与消息。没有索引,"查我的所有项目""查这个项目的文档"都得全表扫描 —— 数据一大就线性变慢。我们在三张高频表的外键上各建一个索引。</p>
+    <div class="grid g3 reveal-stagger">
+      <div class="card"><h3><span class="ico">🗂</span>sessions</h3><p><span class="mono">sessions_user_id_idx</span><br/>按 userId 查项目列表 —— 仪表盘加载。</p></div>
+      <div class="card"><h3><span class="ico">📄</span>documents</h3><p><span class="mono">documents_session_id_idx</span><br/>按 sessionId 检索文档 —— 工作台预览。</p></div>
+      <div class="card"><h3><span class="ico">💬</span>messages</h3><p><span class="mono">messages_session_id_idx</span><br/>按 sessionId 拉取对话历史。</p></div>
     </div>
+    <div class="takeaway reveal"><span class="ti">◆</span><div>三个查询从全表扫描的 <b>O(n)</b> 降到 B-tree 的 <b>O(log n)</b>。做团队协作分享时又给新表 <span class="mono">session_shares</span> 建了 session / user 两个方向的索引 —— "分享给了谁"和"谁分享给我"是反向查询,各走一个。</div></div>
   </section>
 
-  <!-- 17 · TEAMMATE 任增宇 -->
-  <section class="slide" data-slide="teammate2">
-    <div class="kicker reveal">18 · 团队协作 · 任增宇</div>
-    <h2 class="title reveal">前端 UI 与文档内容</h2>
+  <!-- 16b · TEAMMATE 徐健皓 — ② append-only 版本管理 -->
+  <section class="slide" data-slide="opt-append">
+    <div class="kicker reveal">18 · 团队协作 · 徐健皓</div>
+    <h2 class="title reveal">append-only 版本管理 · 让文档"活"起来</h2>
+    <p class="lead reveal">AI 生成的文档会反复迭代:架构图改一版、ER 图再改一版。如果直接覆盖旧内容,用户就再也看不到上一版长什么样,更没法对比演化。我们的设计是 —— 只追加,不覆盖。</p>
     <div class="grid g2 reveal-stagger">
-      <div class="card"><h3><span class="ico">🧠</span>持久化思维链组件</h3><p>展示每个 Agent 的执行元数据(步骤 / 工具 / 生成类型),让 AI 的"思考过程"可视化、可回看。</p></div>
-      <div class="card"><h3><span class="ico">🧱</span>基础组件库</h3><p>Avatar / Button / Message / CodeBlock / PromptInput / Tooltip / ChatContainer / ScrollButton 等十余个可复用组件。</p></div>
-      <div class="card"><h3><span class="ico">🎨</span>品牌设计</h3><p>Logo、Funnel Display 字体、Anthropic 风格 landing page、背景装饰 SVG —— 整体视觉调性。</p></div>
-      <div class="card"><h3><span class="ico">📖</span>文档与内容</h3><p>ARCH.md 14 节完整架构文档 + README 项目介绍 + 5 篇技术博客(API 设计 / 性能 / 需求 / 测试 / 协作)。</p></div>
+      <div class="card"><h3><span class="ico">📚</span>版本链表</h3><p>每次生成不是 UPDATE,而是 INSERT 一条新记录:<span class="mono">version</span> 自增、<span class="mono">parentVersionId</span> 指向上一版,形成 <span class="mono">v1 ← v2 ← v3</span> 的链。</p></div>
+      <div class="card"><h3><span class="ico">⏪</span>回滚与对比</h3><p>完整保留演化史,天然支持回看与版本对比,等于自带一份审计记录。预览面板顶部"版本 N · 时间"就是从这条链读出来的。</p></div>
     </div>
+    <div class="takeaway reveal"><span class="ti">◆</span><div>逻辑落在 <span class="mono">createDocument</span>:先查当前最新版,新版本号 = 旧版 + 1,parent 指向旧版。<b>只增不删 —— 并发生成也不会互相覆盖。</b></div></div>
+  </section>
+
+  <!-- 16c · TEAMMATE 徐健皓 — ③ Vercel Analytics -->
+  <section class="slide" data-slide="opt-analytics">
+    <div class="kicker reveal">19 · 团队协作 · 徐健皓</div>
+    <h2 class="title reveal">Vercel Analytics 集成 · 线上可观测</h2>
+    <p class="lead reveal">本地跑得好,不代表线上跑得好。真实用户的访问量、页面性能这些线上数据,开发环境根本看不到。我们接入了 Vercel 官方 Analytics。</p>
+    <div class="grid g2 reveal-stagger">
+      <div class="card"><h3><span class="ico">🔌</span>零侵入接入</h3><p>在根布局 <span class="mono">app/layout.tsx</span> 挂一个 <span class="mono">&lt;Analytics /&gt;</span>,全站页面自动上报 —— 跟着 Next.js 路由采集,不用手动埋点。</p></div>
+      <div class="card"><h3><span class="ico">📈</span>监控什么</h3><p>部署到 Vercel 后,控制台直接看访问量和真实用户性能指标(Web Vitals:加载快不快、卡不卡)。</p></div>
+    </div>
+    <div class="takeaway reveal"><span class="ti">◆</span><div>"零埋点"的线上监控,持续盯住真实用户体验。后面要做更细的<b>业务埋点</b>,再在这个基础上扩展。</div></div>
+  </section>
+
+  <!-- 16d · TEAMMATE 徐健皓 — ④ 输入边界控制 -->
+  <section class="slide" data-slide="opt-input">
+    <div class="kicker reveal">20 · 团队协作 · 徐健皓</div>
+    <h2 class="title reveal">输入边界控制 · 守住上下文窗口</h2>
+    <p class="lead reveal">底层是 DeepSeek,有上下文窗口上限。用户贴一篇超长需求、或对话历史越积越长,请求体一超限,整个生成就直接崩。所以送进模型前必须层层"收口" —— 一个三层漏斗。</p>
+    <div class="flist reveal-stagger">
+      <div class="fitem"><div class="fn">①</div><div><div class="ft">入口层 · 10k 字符硬上限</div><div class="fd">用户单次输入由 Zod 校验卡在 <span class="mono">max(10000)</span>,超了直接 400 拒掉,根本进不来。</div></div></div>
+      <div class="fitem"><div class="fn">②</div><div><div class="ft">历史层 · 最近 20 条 × 每条 4k</div><div class="fd">对话只取尾部 20 条消息、每条再裁到 4000 字符(<span class="mono">MAX_HISTORY_MESSAGES=20</span> / <span class="mono">MAX_CONTENT_LENGTH=4000</span>)。</div></div></div>
+      <div class="fitem"><div class="fn">③</div><div><div class="ft">Agent 层 · 拼 prompt 前再削一刀</div><div class="fd">每个生成 Agent 各设 <span class="mono">MAX_PROMPT_LENGTH=10000</span>、<span class="mono">MAX_CONTEXT_LENGTH=20000</span>,把"旧文档 + 新需求"拼进去前再收口。</div></div></div>
+    </div>
+    <div class="takeaway reveal"><span class="ti">◆</span><div><b>宁可少喂一点上下文,也不能让一次请求把整个生成搞挂。</b>无论用户怎么贴、历史多长,送给 DeepSeek 的请求体永远在安全范围内。</div></div>
   </section>
 
   <!-- 18 · INNOVATION SUMMARY -->
   <section class="slide" data-slide="summary">
-    <div class="kicker reveal">19 · 总结</div>
+    <div class="kicker reveal">21 · 总结</div>
     <h2 class="title reveal">五大创新点 · 与现场提问</h2>
     <div class="flist reveal-stagger">
       <div class="fitem"><div class="fn">①</div><div><div class="ft">LLM tool_call 智能编排</div><div class="fd">对话 Agent 用标准 function calling 自主决定派哪些子 Agent,取代脆弱的 [READY] 标记 + orchestrator 两段式。</div></div></div>
