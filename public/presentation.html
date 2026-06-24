@@ -654,12 +654,15 @@ h2.title{font-family:var(--font-display);font-weight:600;font-size:clamp(2rem,3.
   <section class="slide" data-slide="summary">
     <div class="kicker reveal">21 · 总结</div>
     <h2 class="title reveal">五大创新点 · 与现场提问</h2>
-    <div class="flist reveal-stagger">
-      <div class="fitem"><div class="fn">①</div><div><div class="ft">LLM tool_call 智能编排</div><div class="fd">对话 Agent 用标准 function calling 自主决定派哪些子 Agent,取代脆弱的 [READY] 标记 + orchestrator 两段式。</div></div></div>
-      <div class="fitem"><div class="fn">②</div><div><div class="ft">全局后台生成 + 实时通知</div><div class="fd">SSE reader 脱离 React 生命周期,切页面不中断;GenerationWatcher + Toast 完成即提醒。</div></div></div>
-      <div class="fitem"><div class="fn">③</div><div><div class="ft">对话式需求澄清自动触发</div><div class="fd">不用点按钮 —— AI 边聊边判断需求是否就绪,时机成熟自动发起生成。</div></div></div>
-      <div class="fitem"><div class="fn">④</div><div><div class="ft">append-only 版本演化</div><div class="fd">文档只增不覆盖,Design/ER Agent 读旧版增量演化,完整保留设计演化史。</div></div></div>
-      <div class="fitem"><div class="fn">⑤</div><div><div class="ft">用户画像注入个性化</div><div class="fd"><span class="mono">user.md</span> 个人配置注入系统 Prompt,输出贴合个人偏好。</div></div></div>
+    <div style="display:flex;gap:32px;align-items:center;margin-top:28px">
+      <div class="flist reveal-stagger" style="margin-top:0;flex:1;min-width:0">
+        <div class="fitem"><div class="fn">①</div><div><div class="ft">LLM tool_call 智能编排</div><div class="fd">对话 Agent 用标准 function calling 自主决定派哪些子 Agent,取代脆弱的 [READY] 标记 + orchestrator 两段式。</div></div></div>
+        <div class="fitem"><div class="fn">②</div><div><div class="ft">全局后台生成 + 实时通知</div><div class="fd">SSE reader 脱离 React 生命周期,切页面不中断;GenerationWatcher + Toast 完成即提醒。</div></div></div>
+        <div class="fitem"><div class="fn">③</div><div><div class="ft">对话式需求澄清自动触发</div><div class="fd">不用点按钮 —— AI 边聊边判断需求是否就绪,时机成熟自动发起生成。</div></div></div>
+        <div class="fitem"><div class="fn">④</div><div><div class="ft">append-only 版本演化</div><div class="fd">文档只增不覆盖,Design/ER Agent 读旧版增量演化,完整保留设计演化史。</div></div></div>
+        <div class="fitem"><div class="fn">⑤</div><div><div class="ft">用户画像注入个性化</div><div class="fd"><span class="mono">user.md</span> 个人配置注入系统 Prompt,输出贴合个人偏好。</div></div></div>
+      </div>
+      <img class="reveal" src="/httpscycle-mind.navir.icu.png" alt="CycleMind 网站二维码" style="width:280px;flex:0 0 auto;border-radius:12px;border:1px solid var(--border-default);box-shadow:0 8px 30px rgba(0,0,0,.12)">
     </div>
     <div class="takeaway reveal" style="margin-top:22px"><span class="ti">◆</span><div style="font-family:var(--font-display);font-size:18px"><b>感谢聆听 —— 欢迎提问。</b>&nbsp;&nbsp;CycleMind · 让设计文档随对话一起生长。</div></div>
   </section>
