@@ -1,7 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  async rewrites() {
+    return [
+      // 把 /presentation 路由指向 public/presentation.html 静态幻灯片
+      { source: "/presentation", destination: "/presentation.html" },
+    ];
+  },
 };
 
 export default nextConfig;
